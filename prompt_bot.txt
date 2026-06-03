@@ -1,0 +1,258 @@
+Le bot SeLoger rencontre plusieurs problèmes :
+
+1. XPath invalides
+2. Champs du formulaire introuvables
+3. Popup Usercentrics
+4. Erreurs Unicode/charmap dans les logs
+5. Besoin de comprendre précisément pourquoi le remplissage échoue
+
+Je veux un mode debug complet et une gestion robuste des erreurs.
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+1. CORRECTION DES XPATH
+   ━━━━━━━━━━━━━━━━━━━━━━
+
+Rechercher tous les XPath invalides du projet.
+
+Exemple incorrect :
+
+//*[contains(.,'Contacter l'agence')]
+
+Exemples corrects :
+
+//*[contains(text(),"Contacter l'agence")]
+
+ou
+
+//*[contains(., "Contacter l'agence")]
+
+Vérifier tous les XPath utilisés dans :
+
+* contact_manager.py
+* scraper.py
+
+et les corriger.
+
+━━━━━━━━━━━━━━━━━━━━━━
+2. GESTION DES ERREURS UNICODE
+━━━━━━━━━━━━━━━━━━━━━━
+
+Au démarrage du programme :
+
+```python
+import sys
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except:
+    pass
+```
+
+Créer :
+
+```python
+def safe_log(text):
+    try:
+        return str(text)
+    except:
+        return repr(text)
+```
+
+Tous les logger.info(), logger.warning() et logger.error()
+affichant du texte provenant du site doivent utiliser safe_log().
+
+Le logger ne doit jamais provoquer une exception.
+
+━━━━━━━━━━━━━━━━━━━━━━
+3. DEBUG DES CHAMPS DU FORMULAIRE
+━━━━━━━━━━━━━━━━━━━━━━
+
+Juste avant le remplissage :
+
+Logger :
+
+* URL actuelle
+* titre de la page
+
+Puis :
+
+```python
+len(driver.find_elements(By.NAME, "firstName"))
+len(driver.find_elements(By.NAME, "lastName"))
+len(driver.find_elements(By.NAME, "email"))
+len(driver.find_elements(By.NAME, "phoneNumber"))
+```
+
+Logger les résultats.
+
+━━━━━━━━━━━━━━━━━━━━━━
+4. ATTENTE DU FORMULAIRE
+━━━━━━━━━━━━━━━━━━━━━━
+
+Si un champ est absent :
+
+Attendre jusqu'à 15 secondes :
+
+```python
+WebDriverWait(driver, 15).until(
+    EC.presence_of_element_located(
+        (By.NAME, "firstName")
+    )
+)
+```
+
+Même logique pour :
+
+* lastName
+* email
+* phoneNumber
+
+━━━━━━━━━━━━━━━━━━━━━━
+5. INVENTAIRE COMPLET DES INPUTS
+━━━━━━━━━━━━━━━━━━━━━━
+
+Juste avant le remplissage :
+
+Logger TOUS les inputs :
+
+* tag
+* name
+* id
+* type
+* placeholder
+* value
+* visible
+* enabled
+
+afin de vérifier si React remplace les champs.
+
+━━━━━━━━━━━━━━━━━━━━━━
+6. VERIFICATION DU REMPLISSAGE
+━━━━━━━━━━━━━━━━━━━━━━
+
+Avant chaque remplissage :
+
+Logger :
+
+* is_displayed()
+* is_enabled()
+* valeur actuelle
+
+Après :
+
+```python
+send_keys(...)
+```
+
+Lire :
+
+```python
+element.get_attribute("value")
+```
+
+et logger :
+
+* valeur après remplissage
+
+━━━━━━━━━━━━━━━━━━━━━━
+7. FALLBACK JAVASCRIPT
+━━━━━━━━━━━━━━━━━━━━━━
+
+Si send_keys échoue :
+
+```python
+driver.execute_script(
+    "arguments[0].value = arguments[1]",
+    element,
+    valeur
+)
+```
+
+Puis vérifier à nouveau la valeur.
+
+━━━━━━━━━━━━━━━━━━━━━━
+8. USERCENTRICS
+━━━━━━━━━━━━━━━━━━━━━━
+
+Créer :
+
+```python
+fermer_popup_usercentrics(driver)
+```
+
+À appeler :
+
+* après driver.get()
+* avant "Contacter l'agence"
+* avant "Ajouter un message"
+* avant "Envoyer"
+
+La fonction doit :
+
+* cliquer sur OK si présent
+* sinon supprimer usercentrics-root
+* logger le résultat
+
+━━━━━━━━━━━━━━━━━━━━━━
+9. SCREENSHOTS AUTOMATIQUES
+━━━━━━━━━━━━━━━━━━━━━━
+
+Si :
+
+* firstName introuvable
+* lastName introuvable
+* email introuvable
+* phoneNumber introuvable
+
+Créer automatiquement :
+
+screenshots/champs_introuvables.png
+
+et
+
+debug/champs_introuvables.html
+
+━━━━━━━━━━━━━━━━━━━━━━
+10. GESTION ROBUSTE DES ERREURS
+━━━━━━━━━━━━━━━━━━━━━━
+
+Capturer :
+
+* NoSuchElementException
+* TimeoutException
+* StaleElementReferenceException
+* ElementClickInterceptedException
+* InvalidSelectorException
+* WebDriverException
+* Exception
+
+Le bot ne doit jamais s'arrêter sur une seule annonce.
+
+En cas d'erreur :
+
+* logger l'erreur
+* enregistrer screenshot
+* enregistrer HTML
+* passer à l'annonce suivante
+
+━━━━━━━━━━━━━━━━━━━━━━
+11. RAPPORT FINAL
+━━━━━━━━━━━━━━━━━━━━━━
+
+Afficher :
+
+* annonces trouvées
+* annonces analysées
+* annonces contactées
+* annonces échouées
+
+et la liste des erreurs rencontrées.
+
+Je veux le code complet des modifications à apporter dans :
+
+* contact_manager.py
+* scraper.py
+* main.py
+  afin d'identifier précisément la cause des échecs et rendre le bot robuste.
