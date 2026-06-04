@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(claude:*)",
-      "Bash(sort -t_ -k1)",
-      "Bash(xargs tail:*)"
-    ]
-  }
-}
