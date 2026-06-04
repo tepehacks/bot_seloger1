@@ -12,6 +12,7 @@ L'extraction des données des fiches est déléguée à fetcher.py (requests + B
 """
 
 import random
+import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -108,6 +109,12 @@ class SeLogerScraper:
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/124.0.0.0 Safari/537.36"
         )
+
+        # ── Réseau : contourne les problèmes DNS en mode headless Windows ────────
+        # ERR_NAME_NOT_RESOLVED peut apparaître si Chrome tente d'utiliser un
+        # proxy système inexistant ou mal configuré.
+        options.add_argument("--no-proxy-server")
+        options.add_argument("--disable-features=NetworkService,NetworkServiceInProcess")
 
         # ── Désactivation des ressources inutiles ─────────────────────────────
         # Images, notifications, géolocalisation, popups → gain de vitesse majeur
@@ -343,3 +350,125 @@ class SeLogerScraper:
             except (TimeoutException, NoSuchElementException):
                 continue
         return False
+
+
+# ── Extraction de prix (hybride Selenium) ─────────────────────────────────────
+
+_PRIX_RE = re.compile(r"\d[\d\s\u00A0\u202F]*€")
+
+
+def _nettoyer_prix(texte: str) -> str:
+    """
+    Extrait le premier montant en euros et le normalise en entier brut.
+
+    Exemples :
+        "495 000 €"    → "495000"
+        "1 600 €/mois" → "1600"
+    """
+    match = _PRIX_RE.search(texte)
+    if not match:
+        return ""
+    brut = match.group(0)
+    # Supprimer espaces, nbsp, narrow-nbsp, €, et tout ce qui suit
+    return re.sub(r"[\s\u00A0\u202F€]", "", brut)
+
+
+def extraire_prix(driver: webdriver.Chrome) -> str:
+    """
+    Détecte le prix d'une annonce SeLoger avec une stratégie hybride à 4 niveaux.
+
+    Priorité 1 : span.css-1ln7jbg        (classe CSS dynamique SeLoger 2024)
+    Priorité 2 : div.annonceSpecsListItemPrice
+    Priorité 3 : span[aria-hidden='true'] dans le bloc principal
+    Priorité 4 : regex euros dans le bloc principal (galerie exclue)
+
+    Loggue la stratégie utilisée, le texte brut et la valeur extraite.
+    En cas d'échec total : screenshot + HTML dans debug/.
+
+    Returns:
+        Prix nettoyé (ex. "495000"), ou "" si introuvable.
+    """
+    def _tenter(selecteur: str, contexte=None) -> tuple[str, str]:
+        """Cherche le sélecteur et retourne (texte_brut, prix_nettoyé)."""
+        racine = contexte if contexte is not None else driver
+        try:
+            elements = racine.find_elements(By.CSS_SELECTOR, selecteur)
+            for el in elements:
+                texte = el.text.strip() or el.get_attribute("textContent").strip()
+                if not texte:
+                    continue
+                prix = _nettoyer_prix(texte)
+                if prix:
+                    return texte, prix
+        except Exception:
+            pass
+        return "", ""
+
+    # ── Priorité 1 : span.css-1ln7jbg ────────────────────────────────────────
+    texte, prix = _tenter("span.css-1ln7jbg")
+    if prix:
+        logger.info(f"[PRIX OK] Strategie: css-1ln7jbg | Texte: {texte!r} | Valeur: {prix}")
+        print(f"[PRIX OK] {prix} € (css-1ln7jbg | {texte!r})")
+        return prix
+
+    # ── Priorité 2 : div.annonceSpecsListItemPrice ────────────────────────────
+    texte, prix = _tenter("div.annonceSpecsListItemPrice")
+    if prix:
+        logger.info(f"[PRIX OK] Strategie: annonceSpecsListItemPrice | Texte: {texte!r} | Valeur: {prix}")
+        print(f"[PRIX OK] {prix} € (annonceSpecsListItemPrice | {texte!r})")
+        return prix
+
+    # ── Priorité 3 : span[aria-hidden='true'] dans le bloc principal ──────────
+    bloc_selectors = [
+        "main",
+        "[data-testid='classified-description']",
+        "[class*='classified']",
+        "article",
+        "body",
+    ]
+    bloc = None
+    for sel in bloc_selectors:
+        try:
+            bloc = driver.find_element(By.CSS_SELECTOR, sel)
+            break
+        except NoSuchElementException:
+            continue
+
+    if bloc:
+        texte, prix = _tenter("span[aria-hidden='true']", contexte=bloc)
+        if prix:
+            logger.info(f"[PRIX OK] Strategie: aria-hidden | Texte: {texte!r} | Valeur: {prix}")
+            print(f"[PRIX OK] {prix} € (aria-hidden | {texte!r})")
+            return prix
+
+    # ── Priorité 4 : regex dans le texte du bloc principal ───────────────────
+    try:
+        contenu = (bloc or driver.find_element(By.TAG_NAME, "body")).text
+        match = _PRIX_RE.search(contenu)
+        if match:
+            texte = match.group(0)
+            prix = _nettoyer_prix(texte)
+            if prix:
+                logger.info(f"[PRIX OK] Strategie: regex fallback | Texte: {texte!r} | Valeur: {prix}")
+                print(f"[PRIX OK] {prix} € (regex fallback | {texte!r})")
+                return prix
+    except Exception:
+        pass
+
+    # ── Échec total ───────────────────────────────────────────────────────────
+    logger.warning("[PRIX KO] Prix introuvable — toutes les strategies ont echoue.")
+    print("[PRIX KO] Prix introuvable")
+    try:
+        horodatage = time.strftime("%Y%m%d_%H%M%S")
+        SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+        driver.save_screenshot(str(SCREENSHOTS_DIR / f"prix_manquant_{horodatage}.png"))
+        debug_dir = Path(__file__).resolve().parent / "debug"
+        debug_dir.mkdir(parents=True, exist_ok=True)
+        (debug_dir / f"prix_manquant_{horodatage}.html").write_text(
+            driver.page_source, encoding="utf-8"
+        )
+        print(f"[PRIX KO] Screenshot + HTML sauvegardes ({horodatage})")
+    except Exception:
+        pass
+
+    return ""

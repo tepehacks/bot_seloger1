@@ -1,146 +1,42 @@
-Analyse tout le projet et corrige automatiquement tous les problèmes visibles dans les logs.
+2026-06-04 17:05:10 | INFO     | contact_manager |   [apres M1] value='Tepe'
+2026-06-04 17:05:10 | INFO     | contact_manager | Champ nom trouve et rempli.
+2026-06-04 17:05:10 | INFO     | contact_manager |   [avant] displayed=True | enabled=True | value=''
+2026-06-04 17:05:13 | INFO     | contact_manager |   [apres M1] value='pierrealexandretepe6z@gmail.com'
+2026-06-04 17:05:13 | INFO     | contact_manager | Champ email trouve et rempli.
+2026-06-04 17:05:28 | INFO     | contact_manager | Champ telephone rempli (hidden JS).
+2026-06-04 17:05:28 | INFO     | contact_manager | Message genere : Bonjour,
 
-PROBLÈME N°1 : Logging cassé
+Votre bien a retenu toute mon attention.
 
-Erreur répétée :
+Je me pe...
+2026-06-04 17:05:33 | INFO     | contact_manager | Textarea avant clic : 0
+[MESSAGE] Textarea avant clic : 0
+2026-06-04 17:05:33 | INFO     | contact_manager | Clic sur Contacter l'agence
+[MESSAGE] Clic sur Contacter l'agence
+2026-06-04 17:05:59 | INFO     | contact_manager | Textarea apres clic : 0
+[MESSAGE] Textarea apres clic : 0
+2026-06-04 17:05:59 | WARNING  | contact_manager | Textarea toujours absent — listing des boutons visibles :
+[MESSAGE] Textarea toujours absent — listing boutons
+2026-06-04 17:06:00 | WARNING  | contact_manager |   <button> texte='Contacter l'agence' | class='css-rb6sau'
+2026-06-04 17:06:00 | WARNING  | contact_manager |   <button> texte='Contacter l'agence' | class='css-rb6sau'
+2026-06-04 17:06:00 | WARNING  | contact_manager |   <button> texte='Contacter l'agence' | class='css-rb6sau'
+2026-06-04 17:06:03 | INFO     | contact_manager | Screenshot sauvegarde : screenshots/debug_formulaire.png
+2026-06-04 17:06:03 | INFO     | contact_manager | HTML sauvegarde : debug/formulaire.html
+2026-06-04 17:06:03 | INFO     | contact_manager | Simulation — formulaire rempli, envoi non effectue.
+2026-06-04 17:06:03 | INFO     | main | Temps envoi messages : 134.1s
+2026-06-04 17:06:07 | INFO     | scraper | Navigateur fermé.
+2026-06-04 17:06:07 | INFO     | main | ============================================================
+2026-06-04 17:06:07 | INFO     | main | RAPPORT FINAL
+2026-06-04 17:06:07 | INFO     | main |   Annonces trouvees   : 29
+2026-06-04 17:06:07 | INFO     | main |   Annonces analysees  : 1
+2026-06-04 17:06:07 | INFO     | main |   Annonces contactees : 1
+2026-06-04 17:06:07 | INFO     | main |   Annonces echouees   : 0
+2026-06-04 17:06:07 | INFO     | main |   ---
+2026-06-04 17:06:07 | INFO     | main |   Temps recherche              : 0.0s
+2026-06-04 17:06:07 | INFO     | main |   Temps recuperation annonces  : 54.2s
+2026-06-04 17:06:07 | INFO     | main |   Temps extraction             : 1.6s
+2026-06-04 17:06:07 | INFO     | main |   Temps envoi messages         : 134.1s
+2026-06-04 17:06:07 | INFO     | main |   Temps total                  : 197.7s
+2026-06-04 17:06:07 | INFO     | main | ============================================================
 
-PermissionError: [WinError 32]
-
-Le fichier :
-
-logs/bot_seloger.log
-
-est verrouillé pendant le rollover.
-
-Le logger tente de renommer :
-
-bot_seloger.log
-→ bot_seloger.log.2026-06-03
-
-mais le fichier est encore utilisé.
-
-Je veux :
-
-* identifier pourquoi plusieurs handlers utilisent le même fichier
-* éviter les handlers dupliqués
-* éviter plusieurs initialisations du logger
-* remplacer TimedRotatingFileHandler si nécessaire
-* utiliser delay=True
-* fermer correctement les handlers
-* empêcher tout crash du logging
-
-Le logger ne doit jamais interrompre le programme.
-
-━━━━━━━━━━━━━━━━━━━━━━
-
-PROBLÈME N°2 : Recherche de ville extrêmement lente
-
-Le log montre :
-
-Temps recherche : 104.1s
-
-La résolution de ville prend plus d'une minute.
-
-Je veux :
-
-* analyser city_resolver.py
-* supprimer tous les sleep inutiles
-* remplacer les sleep par WebDriverWait
-* réduire les timeouts
-* optimiser la récupération du code ville
-* mettre un cache mémoire :
-
-Marseille -> AD08FR4491
-
-afin d'éviter de refaire la recherche plusieurs fois
-
-* ajouter un cache disque JSON
-
-Objectif :
-moins de 5 secondes pour obtenir le code ville.
-
-━━━━━━━━━━━━━━━━━━━━━━
-
-PROBLÈME N°3 : Optimisation Selenium
-
-Je veux :
-
-* désactiver les images
-* désactiver les notifications
-* désactiver les animations
-* utiliser page_load_strategy='eager'
-* réduire les temps de chargement
-* supprimer les waits inutiles
-
-━━━━━━━━━━━━━━━━━━━━━━
-
-PROBLÈME N°4 : Robustesse
-
-Créer :
-
-safe_find_element()
-safe_click()
-safe_send_keys()
-
-avec retry automatique.
-
-Ne jamais faire planter le programme sur :
-
-* NoSuchElementException
-* TimeoutException
-* StaleElementReferenceException
-* ElementClickInterceptedException
-* InvalidSelectorException
-
-Passer automatiquement à l'annonce suivante.
-
-━━━━━━━━━━━━━━━━━━━━━━
-
-PROBLÈME N°5 : Diagnostic formulaire
-
-Ajouter un mode debug qui affiche :
-
-* tous les inputs
-* name
-* id
-* placeholder
-* type
-* visible
-* enabled
-
-avant remplissage.
-
-Sauvegarder automatiquement :
-
-screenshots/debug_formulaire.png
-
-et
-
-debug/formulaire.html
-
-si le remplissage échoue.
-
-━━━━━━━━━━━━━━━━━━━━━━
-
-PROBLÈME N°6 : Rapport final
-
-Afficher :
-
-* temps de recherche
-* temps de scraping
-* temps de contact
-* annonces trouvées
-* annonces contactées
-* annonces échouées
-
-et les erreurs rencontrées.
-
-Je veux le code complet corrigé pour :
-
-* logger_config.py
-* city_resolver.py
-* scraper.py
-* contact_manager.py
-* main.py
-
-avec priorité maximale sur la vitesse et la stabilité.
+[Done] exited with code=0 in 199.805 seconds

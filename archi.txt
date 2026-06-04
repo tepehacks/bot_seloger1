@@ -1,0 +1,22 @@
+
+  main.py                                                                                                                   │
+    ├─ Phase 1 : url_builder.generer_url_seloger()                                                                          │     └─ city_resolver.obtenir_code_ville()  ← retry x3 sur ERR_NAME_NOT_RESOLVED
+    │
+    ├─ Phase 2 : scraper.collecter_liens()
+    │
+    ├─ Phase 3 : fetcher.extraire_annonces_parallele()  ← BS4 / JSON-LD / meta
+    │
+    └─ Phase 4 : contact_manager.contacter_annonce()
+          ├─ _enrichir_annonce()
+          │     ├─ __NEXT_DATA__ (Next.js)
+          │     ├─ JSON-LD
+          │     ├─ sélecteurs CSS BeautifulSoup
+          │     └─ extraire_prix(driver)  ← 4 stratégies Selenium [NOUVEAU]
+          │
+          ├─ _detecter_mode_formulaire()  ← [NOUVEAU]
+          │     ├─ "complet"   → remplit prénom/nom/email/tel/message
+          │     ├─ "connecte"  → remplit message uniquement
+          │     └─ None        → "Pas de formulaire"
+          │
+          └─ _remplir_formulaire(prix, mode=...)  ← [NOUVEAU]
+

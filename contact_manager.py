@@ -31,7 +31,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from config import SCREENSHOTS_DIR, WAIT_MAX, WAIT_MIN
 from logger import setup_logger
-from scraper import Annonce, SeLogerScraper
+from scraper import Annonce, SeLogerScraper, extraire_prix
 from utils import capturer_erreur, logger_erreur, safe_click, safe_find_element, safe_log
 
 logger = setup_logger("contact_manager")
@@ -233,17 +233,19 @@ class ContactManager:
             self._ouvrir_fiche(annonce.lien)
             # Enrichir les donnees depuis le HTML rendu par JS (Selenium)
             self._enrichir_annonce(annonce)
-            self._debug_page("formulaire")
             self._chercher_et_cliquer_bouton_contact()
+            # Debug APRES le clic — le HTML contient maintenant le formulaire rendu
+            self._debug_page("formulaire")
             self._logger_tous_champs()
 
-            if not self._formulaire_present():
+            mode = self._detecter_mode_formulaire()
+            if mode is None:
                 logger.warning("Aucun formulaire detecte.")
                 return False, "Pas de formulaire"
 
             self._debug_avant_remplissage()
             self._logger_tous_champs()
-            self._remplir_formulaire(annonce.prix)
+            self._remplir_formulaire(annonce.prix, mode=mode)
 
             if envoyer_message:
                 self._cliquer_envoyer()
@@ -412,6 +414,10 @@ class ContactManager:
             if m:
                 annonce.localisation = m.group(1).strip()
 
+        # Fallback prix : extraire via Selenium (4 strategies hybrides)
+        if not annonce.prix:
+            annonce.prix = extraire_prix(self.driver)
+
         logger.info(
             f"Annonce enrichie : '{annonce.titre[:40]}' | "
             f"prix={annonce.prix} | surface={annonce.surface} | "
@@ -456,22 +462,21 @@ class ContactManager:
 
     def _chercher_et_cliquer_bouton_contact(self) -> None:
         """
-        Cherche le bouton de contact avec plusieurs strategies (fallback).
-        Priorite aux attributs stables : texte visible, aria-label, name.
-        Jamais d'IDs React dynamiques ni de classes css-xxxxx.
+        Cherche le bouton de contact et clique dessus.
+        Priorite aux <button> pour eviter de cliquer sur des <a> qui naviguent.
+        Si la page part vers /map apres le clic, revient en arriere.
         """
+        url_avant = self.driver.current_url
+
+        # Strategies : <button> en priorite, jamais de //* generique
         strategies = [
-            # Strategie 1 : texte exact "Contacter l'agence" — guillemets doubles
-            (By.XPATH, '//*[contains(., "Contacter l\'agence")]'),
-            (By.XPATH, '//*[contains(text(), "Contacter l\'agence")]'),
-            # Strategie 2 : aria-label contenant "contacter"
-            (By.XPATH, '//*[contains(translate(@aria-label,"CONTACTER","contacter"),"contacter")]'),
-            # Strategie 3 : mots-cles generiques sur boutons et liens
+            (By.XPATH, "//button[contains(text(), \"Contacter l'agence\")]"),
+            (By.XPATH, "//button[contains(., \"Contacter l'agence\")]"),
+            (By.XPATH, "//button[contains(translate(text(),'contacter','CONTACTER'),'CONTACTER')]"),
             (By.XPATH, "//button[contains(., 'Contacter')]"),
             (By.XPATH, "//button[contains(., 'Contact')]"),
             (By.XPATH, "//button[contains(., 'Envoyer')]"),
             (By.XPATH, "//button[contains(., 'Message')]"),
-            (By.XPATH, "//a[contains(., 'Contacter')]"),
         ]
 
         for i, (by, sel) in enumerate(strategies, start=1):
@@ -491,15 +496,30 @@ class ContactManager:
                 except (ElementClickInterceptedException, ElementNotInteractableException):
                     self.driver.execute_script("arguments[0].click();", btn)
                 logger.info("Clic bouton contact effectue.")
+
+                # Si la page a navigue vers /map — revenir a la fiche
+                self.scraper._attendre(0.5, 1.0)
+                url_apres = self.driver.current_url
+                if "/map" in url_apres and "/map" not in url_avant:
+                    logger.warning(f"Navigation inattendue vers /map — retour arriere.")
+                    self.driver.back()
+                    WebDriverWait(self.driver, 10).until(
+                        EC.presence_of_element_located((By.TAG_NAME, "body"))
+                    )
+
+                # Attendre le formulaire : firstName OU textarea OU infos personnelles
                 try:
-                    WebDriverWait(self.driver, 8).until(
-                        EC.presence_of_element_located(
-                            (By.XPATH, "(//input[@name='firstName'])[last()]")
+                    WebDriverWait(self.driver, 15).until(
+                        lambda d: (
+                            d.find_elements(By.NAME, "firstName")
+                            or d.find_elements(By.NAME, "message")
+                            or d.find_elements(By.TAG_NAME, "textarea")
+                            or d.find_elements(By.XPATH, "//*[contains(text(),'Informations personnelles')]")
                         )
                     )
-                    logger.info("Formulaire contact apparu.")
+                    logger.info("Formulaire detecte apres clic.")
                 except TimeoutException:
-                    logger.warning("Formulaire non detecte apres clic.")
+                    logger.warning("Formulaire non detecte apres 15s.")
                 return
             except (TimeoutException, NoSuchElementException,
                     StaleElementReferenceException):
@@ -546,17 +566,80 @@ class ContactManager:
 
     # ── Detection du formulaire ───────────────────────────────────────────────
 
-    def _formulaire_present(self) -> bool:
-        for sel in [
-            "input[name='firstName']", "input[name='lastName']",
-            "input[name='email']", "input[type='email']", "textarea",
-        ]:
+    def _detecter_mode_formulaire(self) -> str | None:
+        """
+        Attend jusqu'a 15s que le formulaire apparaisse, puis detecte le mode.
+
+        Returns:
+            "complet"  — champs firstName/lastName/email presents (non connecte)
+            "connecte" — utilisateur deja connecte, carte infos personnelles visible
+            None       — aucun formulaire detecte apres attente
+        """
+        # Attente explicite : le formulaire est rendu par JS apres le clic
+        try:
+            WebDriverWait(self.driver, 15).until(
+                lambda d: (
+                    d.find_elements(By.NAME, "firstName")
+                    or d.find_elements(By.NAME, "message")
+                    or d.find_elements(By.TAG_NAME, "textarea")
+                    or d.find_elements(By.XPATH, "//*[contains(text(),'Informations personnelles')]")
+                    or d.find_elements(By.NAME, "email")
+                )
+            )
+        except TimeoutException:
+            pass  # On laisse les checks ci-dessous determiner le mode
+
+        # Mode 1 : formulaire complet (firstName present)
+        try:
+            el = self.driver.find_element(By.NAME, "firstName")
+            if el:
+                logger.info("Mode detecte : formulaire complet")
+                print("[FORMULAIRE] Mode detecte : formulaire complet")
+                return "complet"
+        except NoSuchElementException:
+            pass
+
+        # Mode 2 : utilisateur connecte
+        indicateurs_connecte = [
+            (By.XPATH, "//*[contains(text(),'Informations personnelles')]"),
+            (By.XPATH, "//*[contains(@aria-label,'modifier') or contains(@aria-label,'Modifier')]"),
+            (By.XPATH, "//*[contains(@aria-label,'editer') or contains(@aria-label,'Editer')]"),
+            (By.XPATH, "//button[contains(@title,'Modifier')]"),
+            (By.XPATH, "//*[contains(@class,'contact') or contains(@class,'Contact')]"
+                       "//*[contains(text(),'@')]"),
+        ]
+        for by, sel in indicateurs_connecte:
             try:
-                self.driver.find_element(By.CSS_SELECTOR, sel)
-                return True
+                el = self.driver.find_element(by, sel)
+                if el:
+                    logger.info("Mode detecte : utilisateur connecte")
+                    print("[FORMULAIRE] Mode detecte : utilisateur connecte")
+                    return "connecte"
             except NoSuchElementException:
                 continue
-        return False
+
+        # Fallback : textarea ou input message visible
+        for by, sel in [
+            (By.TAG_NAME,     "textarea"),
+            (By.NAME,         "message"),
+            (By.CSS_SELECTOR, "textarea[name='message']"),
+        ]:
+            try:
+                el = self.driver.find_element(by, sel)
+                if el.is_displayed():
+                    logger.info("Mode detecte : textarea/message visible")
+                    print("[FORMULAIRE] Mode detecte : textarea visible")
+                    return "connecte"
+            except NoSuchElementException:
+                continue
+
+        logger.warning("Aucun formulaire detecte.")
+        print("[FORMULAIRE] Aucun formulaire detecte")
+        return None
+
+    def _formulaire_present(self) -> bool:
+        """Compatibilite — utilise _detecter_mode_formulaire en interne."""
+        return self._detecter_mode_formulaire() is not None
 
     # ── Remplissage ───────────────────────────────────────────────────────────
 
@@ -577,7 +660,18 @@ class ContactManager:
         except Exception:
             pass
 
-    def _remplir_formulaire(self, prix_str: str = "") -> None:
+    def _remplir_formulaire(self, prix_str: str = "", mode: str = "complet") -> None:
+        if mode == "connecte":
+            # Utilisateur deja connecte : infos personnelles deja presentes,
+            # on cherche directement "Ajouter un message" puis on remplit le textarea.
+            logger.info("Remplissage mode connecte : message uniquement.")
+            ok_message = self._remplir_champ_message(prix_str)
+            if not ok_message:
+                logger.warning("Remplissage message echoue (mode connecte).")
+                self._sauvegarder_debug_formulaire()
+            return
+
+        # Mode complet : tous les champs
         ok_prenom    = self._remplir_champ_prenom()
         ok_nom       = self._remplir_champ_nom()
         ok_email     = self._remplir_champ_email()
@@ -849,53 +943,103 @@ class ContactManager:
             return False
 
     def _remplir_champ_message(self, prix_str: str = "") -> bool:
-        # Verifier si le textarea est deja visible, sinon cliquer sur le bouton
-        textarea_visible = False
-        try:
-            champ = self.driver.find_element(By.CSS_SELECTOR, "textarea")
-            textarea_visible = champ.is_displayed()
-        except NoSuchElementException:
-            pass
-
-        if not textarea_visible:
-            trouve = self._cliquer_ajouter_message()
-            if not trouve:
-                logger.warning("Bouton 'Ajouter un message' introuvable.")
-
+        """
+        Flux correct SeLoger :
+          1. Cliquer "Ajouter un message" pour faire apparaitre le textarea
+          2. Remplir le textarea
+          3. "Contacter l'agence" est clique par _cliquer_envoyer() apres
+        """
         message = _generer_message(prix_str)
         logger.info(f"Message genere : {message[:60]}...")
 
+        # ── Etape 1 : cliquer "Ajouter un message" ────────────────────────────
+        logger.info("Recherche du lien 'Ajouter un message'...")
+        selecteurs_ajouter = [
+            (By.XPATH, "//*[contains(text(),'Ajouter un message')]"),
+            (By.XPATH, "//button[contains(text(),'Ajouter un message')]"),
+            (By.XPATH, "//div[contains(text(),'Ajouter un message')]"),
+            (By.XPATH, "//span[contains(text(),'Ajouter un message')]"),
+            (By.XPATH, "//a[contains(text(),'Ajouter un message')]"),
+        ]
+        clique = False
+        for by, sel in selecteurs_ajouter:
+            try:
+                el = WebDriverWait(self.driver, 5).until(
+                    EC.presence_of_element_located((by, sel))
+                )
+                self.driver.execute_script(
+                    "arguments[0].scrollIntoView({block:'center'});", el
+                )
+                fermer_popup_usercentrics(self.driver)
+                self.driver.execute_script("arguments[0].click();", el)
+                logger.info(f"Clic 'Ajouter un message' effectue ({sel})")
+                print("[MESSAGE] Clic 'Ajouter un message'")
+                clique = True
+                break
+            except (TimeoutException, NoSuchElementException):
+                continue
+
+        if not clique:
+            logger.warning("Lien 'Ajouter un message' introuvable.")
+            print("[MESSAGE] 'Ajouter un message' introuvable")
+
+        # ── Etape 2 : attendre et trouver le textarea ─────────────────────────
+        textarea = None
         for by, sel in [
+            (By.NAME,         "message"),
             (By.CSS_SELECTOR, "textarea[name='message']"),
-            (By.CSS_SELECTOR, "textarea[placeholder*='essage']"),
-            (By.CSS_SELECTOR, "textarea[aria-label*='essage']"),
-            (By.CSS_SELECTOR, "textarea"),
+            (By.TAG_NAME,     "textarea"),
         ]:
             try:
-                champ = WebDriverWait(self.driver, 5).until(
-                    EC.element_to_be_clickable((by, sel))
+                textarea = WebDriverWait(self.driver, 8).until(
+                    EC.presence_of_element_located((by, sel))
                 )
-                champ.clear()
-                champ.send_keys(message)
-                logger.info("Champ message rempli.")
-                return True
-            except (TimeoutException, NoSuchElementException,
-                    ElementNotInteractableException):
+                logger.info(f"Textarea trouve ({sel})")
+                print(f"[MESSAGE] Textarea trouve ({sel})")
+                break
+            except (TimeoutException, NoSuchElementException):
                 continue
-        logger.warning("Champ message introuvable.")
-        return False
+
+        if textarea is None:
+            logger.warning("Textarea introuvable apres clic 'Ajouter un message'.")
+            print("[MESSAGE] Echec : textarea introuvable")
+            self._sauvegarder_debug_formulaire()
+            return False
+
+        # ── Etape 3 : remplir le textarea ─────────────────────────────────────
+        try:
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block:'center'});", textarea
+            )
+            textarea.click()
+            textarea.clear()
+            textarea.send_keys(message)
+            valeur = textarea.get_attribute("value") or ""
+            if valeur:
+                logger.info("Message rempli avec succes.")
+                print("[MESSAGE] Message rempli avec succes")
+                return True
+            else:
+                logger.warning("Echec remplissage : valeur vide apres send_keys.")
+                print("[MESSAGE] Echec du remplissage")
+                return False
+        except Exception as exc:
+            logger.warning(f"Erreur remplissage textarea : {exc}")
+            print(f"[MESSAGE] Erreur remplissage : {exc}")
+            return False
 
     # ── Envoi ─────────────────────────────────────────────────────────────────
 
     def _cliquer_envoyer(self) -> None:
-        """Clique sur Envoyer — Usercentrics supprime avant chaque tentative."""
+        """Clique sur le bouton d'envoi — 'Contacter l'agence' en priorite."""
         selectors_btn = [
+            (By.XPATH, "//button[contains(text(), \"Contacter l'agence\")]"),
+            (By.XPATH, "//button[contains(., \"Contacter l'agence\")]"),
             (By.CSS_SELECTOR, "button[type='submit']"),
             (By.XPATH, "//button[contains(text(), 'Envoyer')]"),
             (By.XPATH, "//button[contains(text(), 'Envoyer ma demande')]"),
             (By.XPATH, "//button[contains(text(), 'Envoyer un message')]"),
             (By.CSS_SELECTOR, "input[type='submit']"),
-            (By.XPATH, "//button[contains(@class, 'submit')]"),
         ]
 
         for by, sel in selectors_btn:

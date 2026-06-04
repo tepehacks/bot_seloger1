@@ -12,12 +12,14 @@ Optimisations :
 
 import json
 import re
+import time
 from pathlib import Path
 from typing import Optional
 
 from selenium.common.exceptions import (
     NoSuchElementException,
     TimeoutException,
+    WebDriverException,
 )
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -116,12 +118,31 @@ def obtenir_code_ville(ville: str, driver) -> str:
 
     logger.info(f"Resolution du code SeLoger pour : '{ville}'")
 
-    driver.get("https://www.seloger.com")
-
-    # Attendre que la page soit chargee (remplace time.sleep fixe)
-    WebDriverWait(driver, 15).until(
-        EC.presence_of_element_located((By.TAG_NAME, "body"))
-    )
+    # Retry en cas d'erreur réseau (ERR_NAME_NOT_RESOLVED, timeout réseau...)
+    for tentative in range(1, 4):
+        try:
+            driver.get("https://www.seloger.com")
+            WebDriverWait(driver, 15).until(
+                EC.presence_of_element_located((By.TAG_NAME, "body"))
+            )
+            break
+        except WebDriverException as exc:
+            msg = str(exc)
+            if "ERR_NAME_NOT_RESOLVED" in msg or "ERR_INTERNET_DISCONNECTED" in msg or "ERR_CONNECTION" in msg:
+                logger.warning(
+                    f"Erreur reseau (tentative {tentative}/3) : {msg[:120]}"
+                )
+                if tentative < 3:
+                    time.sleep(3 * tentative)
+                else:
+                    raise ConnectionError(
+                        "Chrome ne peut pas acceder a seloger.com "
+                        "(ERR_NAME_NOT_RESOLVED). "
+                        "Verifiez la connexion internet et que Chrome n'est pas "
+                        "bloque par un antivirus ou un proxy."
+                    ) from exc
+            else:
+                raise
 
     _fermer_popups(driver)
 
