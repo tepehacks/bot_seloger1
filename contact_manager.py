@@ -560,12 +560,34 @@ class ContactManager:
 
     # ── Remplissage ───────────────────────────────────────────────────────────
 
+    def _sauvegarder_debug_formulaire(self) -> None:
+        """Sauvegarde screenshot + HTML avec les noms standardises si le remplissage echoue."""
+        try:
+            SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+            self.driver.save_screenshot(str(SCREENSHOTS_DIR / "debug_formulaire.png"))
+            logger.info("Screenshot sauvegarde : screenshots/debug_formulaire.png")
+        except Exception:
+            pass
+        try:
+            _DEBUG_DIR.mkdir(parents=True, exist_ok=True)
+            (_DEBUG_DIR / "formulaire.html").write_text(
+                self.driver.page_source, encoding="utf-8"
+            )
+            logger.info("HTML sauvegarde : debug/formulaire.html")
+        except Exception:
+            pass
+
     def _remplir_formulaire(self, prix_str: str = "") -> None:
-        self._remplir_champ_prenom()
-        self._remplir_champ_nom()
-        self._remplir_champ_email()
-        self._remplir_champ_telephone()
-        self._remplir_champ_message(prix_str)
+        ok_prenom    = self._remplir_champ_prenom()
+        ok_nom       = self._remplir_champ_nom()
+        ok_email     = self._remplir_champ_email()
+        ok_telephone = self._remplir_champ_telephone()
+        ok_message   = self._remplir_champ_message(prix_str)
+
+        # Si au moins un champ critique a echoue → sauvegarder debug
+        if not (ok_prenom and ok_email):
+            logger.warning("Remplissage partiel — sauvegarde debug formulaire.")
+            self._sauvegarder_debug_formulaire()
 
     def _remplir_element(self, el, valeur: str) -> bool:
         """
@@ -659,22 +681,22 @@ class ContactManager:
         capturer_erreur(self.driver, "champs_introuvables")
         return False
 
-    def _remplir_champ_prenom(self) -> None:
-        self._trouver_et_remplir(
+    def _remplir_champ_prenom(self) -> bool:
+        return self._trouver_et_remplir(
             xpath_last="(//input[@name='firstName'])[last()]",
             libelle="prenom",
             valeur=self.prenom,
         )
 
-    def _remplir_champ_nom(self) -> None:
-        self._trouver_et_remplir(
+    def _remplir_champ_nom(self) -> bool:
+        return self._trouver_et_remplir(
             xpath_last="(//input[@name='lastName'])[last()]",
             libelle="nom",
             valeur=self.nom,
         )
 
-    def _remplir_champ_email(self) -> None:
-        self._trouver_et_remplir(
+    def _remplir_champ_email(self) -> bool:
+        return self._trouver_et_remplir(
             xpath_last="(//input[@name='email'])[last()]",
             libelle="email",
             valeur=self.email,
@@ -683,7 +705,7 @@ class ContactManager:
             ],
         )
 
-    def _remplir_champ_telephone(self) -> None:
+    def _remplir_champ_telephone(self) -> bool:
         """
         Strategies stables (pas d'IDs React ni de classes css-xxxxx) :
           1. input[type='tel']  — attribut type stable
@@ -718,11 +740,12 @@ class ContactManager:
         for nom, fn in strategies:
             try:
                 if fn():
-                    return
+                    return True
             except Exception:
                 continue
 
         logger.warning("Champ telephone introuvable.")
+        return False
 
     def _trouver_input_et_remplir(self, by, sel: str, libelle: str) -> bool:
         el = WebDriverWait(self.driver, 4).until(
@@ -825,7 +848,7 @@ class ContactManager:
             logger.warning("Textarea introuvable")
             return False
 
-    def _remplir_champ_message(self, prix_str: str = "") -> None:
+    def _remplir_champ_message(self, prix_str: str = "") -> bool:
         # Verifier si le textarea est deja visible, sinon cliquer sur le bouton
         textarea_visible = False
         try:
@@ -855,11 +878,12 @@ class ContactManager:
                 champ.clear()
                 champ.send_keys(message)
                 logger.info("Champ message rempli.")
-                return
+                return True
             except (TimeoutException, NoSuchElementException,
                     ElementNotInteractableException):
                 continue
         logger.warning("Champ message introuvable.")
+        return False
 
     # ── Envoi ─────────────────────────────────────────────────────────────────
 

@@ -272,17 +272,17 @@ def _afficher_rapport(
 
 if __name__ == "__main__":
     rechercher_annonces(
-        ville="Marseille",
-        transaction="location",
+        ville="Creil",
+        transaction="achat",
         type_logement="appartement",
-        budget_max=1_600,
+        budget_max=70000,
         surface_min=80,
         pieces_min=4,
         chambres_min=2,
-        prenom="Raphael",
+        prenom="Pierre-Alexandre",
         nom="Tepe",
-        email="raph.tepe@gmail.com",
-        telephone="0671635640",
-        envoyer_message=False,   # mettre True pour envoyer réellement
-        nombre_messages=10,
+        email="pierrealexandretepe6z@gmail.com",
+        telephone="0767693603",
+        envoyer_message=True,   # mettre True pour envoyer réellement
+        nombre_messages=1,
     )

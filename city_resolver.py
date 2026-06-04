@@ -1,11 +1,18 @@
 """
-city_resolver.py — Résolution dynamique des codes de ville SeLoger.
+city_resolver.py — Resolution dynamique des codes de ville SeLoger.
 
 Utilise Selenium pour interagir avec le formulaire de recherche de SeLoger.com.
-Tous les time.sleep() ont été remplacés par des WebDriverWait + ExpectedConditions.
+Tous les time.sleep() ont ete remplaces par des WebDriverWait + ExpectedConditions.
+
+Optimisations :
+  - Cache memoire (dict module) : evite de relancer Selenium pour une ville deja resolue.
+  - Cache disque (JSON) : persiste entre les sessions.
+  - Timeouts reduits de 10s a 5s par selecteur.
 """
 
+import json
 import re
+from pathlib import Path
 from typing import Optional
 
 from selenium.common.exceptions import (
@@ -21,8 +28,45 @@ from logger import setup_logger
 
 logger = setup_logger("city_resolver")
 
-# Sélecteurs basés sur le HTML réel de SeLoger (inspecté en juin 2025).
-# L'id dynamique (react-aria...) est volontairement exclu car il change à chaque session.
+# ── Cache ──────────────────────────────────────────────────────────────────────
+
+_CACHE_MEMOIRE: dict[str, str] = {}
+_CACHE_FICHIER = Path(__file__).resolve().parent / "data" / "cache_villes.json"
+
+
+def _charger_cache_disque() -> None:
+    """Charge le cache disque dans le cache memoire au demarrage."""
+    global _CACHE_MEMOIRE
+    try:
+        if _CACHE_FICHIER.exists():
+            data = json.loads(_CACHE_FICHIER.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                _CACHE_MEMOIRE.update(data)
+                logger.debug(f"Cache villes charge : {len(_CACHE_MEMOIRE)} entree(s).")
+    except Exception as exc:
+        logger.debug(f"Cache disque illisible (ignore) : {exc}")
+
+
+def _sauvegarder_cache_disque() -> None:
+    """Sauvegarde le cache memoire sur disque (JSON)."""
+    try:
+        _CACHE_FICHIER.parent.mkdir(parents=True, exist_ok=True)
+        _CACHE_FICHIER.write_text(
+            json.dumps(_CACHE_MEMOIRE, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+    except Exception as exc:
+        logger.debug(f"Sauvegarde cache disque echouee (ignore) : {exc}")
+
+
+# Chargement au demarrage du module
+_charger_cache_disque()
+
+
+# ── Selecteurs ─────────────────────────────────────────────────────────────────
+
+# Sélecteurs bases sur le HTML reel de SeLoger (inspecte en juin 2025).
+# L'id dynamique (react-aria...) est volontairement exclu car il change a chaque session.
 _INPUT_SELECTORS = [
     "input[placeholder='Saisir le lieu ou le code postal']",
     "input[aria-autocomplete='list']",
@@ -42,33 +86,46 @@ _SUGGESTION_SELECTORS = [
 ]
 
 
+# ── Fonction principale ────────────────────────────────────────────────────────
+
 def obtenir_code_ville(ville: str, driver) -> str:
     """
-    Navigue sur SeLoger.com, saisit la ville, sélectionne la première
+    Navigue sur SeLoger.com, saisit la ville, selectionne la premiere
     suggestion et retourne le code de localisation.
+
+    Utilise un cache memoire + disque pour eviter les requetes repetees.
+    Objectif : < 5 secondes pour une ville deja en cache, < 30s sinon.
 
     Args:
         ville:  Nom de la ville (ex. : "Marseille").
-        driver: Instance Selenium WebDriver déjà démarrée.
+        driver: Instance Selenium WebDriver deja demarree.
 
     Returns:
         Code SeLoger (ex. : "AD08FR4491").
 
     Raises:
-        ValueError: Si le code ne peut pas être résolu.
+        ValueError: Si le code ne peut pas etre resolu.
     """
-    logger.info(f"Résolution du code SeLoger pour : '{ville}'")
+    cle = ville.strip().lower()
+
+    # ── 1. Cache memoire ──────────────────────────────────────────────────────
+    if cle in _CACHE_MEMOIRE:
+        code_cache = _CACHE_MEMOIRE[cle]
+        logger.info(f"Code ville depuis cache memoire : '{ville}' -> {code_cache}")
+        return code_cache
+
+    logger.info(f"Resolution du code SeLoger pour : '{ville}'")
 
     driver.get("https://www.seloger.com")
 
-    # Attendre que la page soit chargée (remplace time.sleep fixe)
+    # Attendre que la page soit chargee (remplace time.sleep fixe)
     WebDriverWait(driver, 15).until(
         EC.presence_of_element_located((By.TAG_NAME, "body"))
     )
 
     _fermer_popups(driver)
 
-    # ── 1. Trouver et remplir le champ ville ──────────────────────────────────
+    # ── 2. Trouver et remplir le champ ville ──────────────────────────────────
     champ = _trouver_champ_ville(driver)
     if champ is None:
         raise ValueError(
@@ -78,26 +135,35 @@ def obtenir_code_ville(ville: str, driver) -> str:
     champ.clear()
     champ.send_keys(ville)
 
-    # Attendre l'apparition des suggestions (remplace time.sleep(1.5))
+    # Attendre l'apparition des suggestions
     code = _extraire_code_depuis_suggestions(driver, ville)
     if code:
         logger.info(f"Code extrait depuis les suggestions : {code}")
+        _mettre_en_cache(cle, code)
         return code
 
-    # ── 2. Fallback : soumettre et extraire depuis l'URL ──────────────────────
+    # ── 3. Fallback : soumettre et extraire depuis l'URL ──────────────────────
     logger.info("Aucun code dans les suggestions — soumission du formulaire...")
     code = _extraire_code_depuis_url(driver, champ)
     if code:
         logger.info(f"Code extrait depuis l'URL : {code}")
+        _mettre_en_cache(cle, code)
         return code
 
     raise ValueError(
-        f"Impossible de résoudre le code SeLoger pour '{ville}'. "
-        "Vérifiez l'orthographe ou réessayez."
+        f"Impossible de resoudre le code SeLoger pour '{ville}'. "
+        "Verifiez l'orthographe ou reessayez."
     )
 
 
-# ── Helpers privés ─────────────────────────────────────────────────────────────
+def _mettre_en_cache(cle: str, code: str) -> None:
+    """Ajoute une entree dans le cache memoire et sauvegarde sur disque."""
+    _CACHE_MEMOIRE[cle] = code
+    _sauvegarder_cache_disque()
+    logger.debug(f"Cache mis a jour : '{cle}' -> {code}")
+
+
+# ── Helpers prives ─────────────────────────────────────────────────────────────
 
 def _fermer_popups(driver) -> None:
     """Ferme les popups RGPD sans sleep fixe."""
@@ -114,7 +180,7 @@ def _fermer_popups(driver) -> None:
                 EC.element_to_be_clickable((by, sel))
             )
             btn.click()
-            # Attendre que le popup disparaisse plutôt qu'un sleep fixe
+            # Attendre que le popup disparaisse plutot qu'un sleep fixe
             WebDriverWait(driver, 3).until(
                 EC.invisibility_of_element_located((by, sel))
             )
@@ -125,24 +191,25 @@ def _fermer_popups(driver) -> None:
 
 def _trouver_champ_ville(driver) -> Optional[object]:
     """
-    Cherche le champ de saisie de ville — attend 10 secondes par sélecteur.
+    Cherche le champ de saisie de ville — attend 5 secondes par selecteur
+    (reduit de 10s pour limiter le temps total de 40s a 20s dans le pire cas).
 
-    Logs détaillés + screenshot si introuvable.
+    Logs detailles + screenshot si introuvable.
     """
     logger.info("Recherche du champ ville...")
 
     for sel in _INPUT_SELECTORS:
         try:
-            champ = WebDriverWait(driver, 10).until(
+            champ = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, sel))
             )
-            logger.info(f"Champ trouvé avec le sélecteur : {sel}")
+            logger.info(f"Champ trouve avec le selecteur : {sel}")
             return champ
         except (TimeoutException, NoSuchElementException):
             continue
 
     # Diagnostic complet si introuvable
-    logger.error("Aucun champ ville trouvé")
+    logger.error("Aucun champ ville trouve")
     logger.error(f"URL actuelle     : {driver.current_url}")
     logger.error(f"Titre de la page : {driver.title}")
     try:
@@ -163,7 +230,7 @@ def _trouver_champ_ville(driver) -> Optional[object]:
 
 def _extraire_code_depuis_suggestions(driver, ville: str) -> Optional[str]:
     """
-    Attend l'apparition des suggestions d'autocomplétion avec WebDriverWait,
+    Attend l'apparition des suggestions d'autocompletion avec WebDriverWait,
     puis tente d'en extraire le code de localisation.
     """
     for sel in _SUGGESTION_SELECTORS:
@@ -184,7 +251,7 @@ def _extraire_code_depuis_suggestions(driver, ville: str) -> Optional[str]:
 
                 try:
                     suggestion.click()
-                    # Attendre que l'URL change après le clic (remplace sleep(0.8))
+                    # Attendre que l'URL change apres le clic
                     url_avant = driver.current_url
                     WebDriverWait(driver, 3).until(
                         lambda d: d.current_url != url_avant
@@ -202,7 +269,7 @@ def _extraire_code_depuis_suggestions(driver, ville: str) -> Optional[str]:
 
 
 def _extraire_code_depuis_url(driver, champ) -> Optional[str]:
-    """Soumet avec Entrée et attend le changement d'URL (remplace sleep(2))."""
+    """Soumet avec Entree et attend le changement d'URL."""
     try:
         url_avant = driver.current_url
         champ.send_keys(Keys.RETURN)
@@ -217,11 +284,11 @@ def _extraire_code_depuis_url(driver, champ) -> Optional[str]:
 
 
 def _extraire_locations_depuis_url(url: str) -> Optional[str]:
-    """Extrait le paramètre 'locations' d'une URL SeLoger."""
+    """Extrait le parametre 'locations' d'une URL SeLoger."""
     match = re.search(r"[?&]locations=([^&]+)", url)
     return match.group(1) if match else None
 
 
 def _ressemble_code_seloger(valeur: str) -> bool:
-    """Vérifie si une valeur ressemble à un code SeLoger (ex. AD08FR4491)."""
+    """Verifie si une valeur ressemble a un code SeLoger (ex. AD08FR4491)."""
     return bool(re.match(r"^[A-Z]{2}\d{2}[A-Z]{2}\d+$", valeur))

@@ -95,6 +95,10 @@ class SeLogerScraper:
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
 
+        # ── Stratégie de chargement : eager = DOM prêt, pas besoin d'attendre
+        #    les ressources secondaires (images, polices, analytics...)
+        options.page_load_strategy = "eager"
+
         # ── Anti-détection bot ────────────────────────────────────────────────
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -111,6 +115,12 @@ class SeLogerScraper:
         options.add_argument("--disable-extensions")
         options.add_argument("--disable-notifications")
         options.add_argument("--blink-settings=imagesEnabled=false")
+
+        # ── Désactivation des animations et timers en arrière-plan ───────────
+        options.add_argument("--disable-background-timer-throttling")
+        options.add_argument("--disable-backgrounding-occluded-windows")
+        options.add_argument("--disable-renderer-backgrounding")
+        options.add_argument("--animation-duration-scale=0")
 
         service = Service(ChromeDriverManager().install())
         self.driver = webdriver.Chrome(service=service, options=options)

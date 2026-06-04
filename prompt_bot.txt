@@ -1,258 +1,146 @@
-Le bot SeLoger rencontre plusieurs problèmes :
+Analyse tout le projet et corrige automatiquement tous les problèmes visibles dans les logs.
 
-1. XPath invalides
-2. Champs du formulaire introuvables
-3. Popup Usercentrics
-4. Erreurs Unicode/charmap dans les logs
-5. Besoin de comprendre précisément pourquoi le remplissage échoue
+PROBLÈME N°1 : Logging cassé
 
-Je veux un mode debug complet et une gestion robuste des erreurs.
+Erreur répétée :
+
+PermissionError: [WinError 32]
+
+Le fichier :
+
+logs/bot_seloger.log
+
+est verrouillé pendant le rollover.
+
+Le logger tente de renommer :
+
+bot_seloger.log
+→ bot_seloger.log.2026-06-03
+
+mais le fichier est encore utilisé.
+
+Je veux :
+
+* identifier pourquoi plusieurs handlers utilisent le même fichier
+* éviter les handlers dupliqués
+* éviter plusieurs initialisations du logger
+* remplacer TimedRotatingFileHandler si nécessaire
+* utiliser delay=True
+* fermer correctement les handlers
+* empêcher tout crash du logging
+
+Le logger ne doit jamais interrompre le programme.
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLÈME N°2 : Recherche de ville extrêmement lente
+
+Le log montre :
+
+Temps recherche : 104.1s
+
+La résolution de ville prend plus d'une minute.
+
+Je veux :
+
+* analyser city_resolver.py
+* supprimer tous les sleep inutiles
+* remplacer les sleep par WebDriverWait
+* réduire les timeouts
+* optimiser la récupération du code ville
+* mettre un cache mémoire :
+
+Marseille -> AD08FR4491
+
+afin d'éviter de refaire la recherche plusieurs fois
+
+* ajouter un cache disque JSON
+
+Objectif :
+moins de 5 secondes pour obtenir le code ville.
 
 ━━━━━━━━━━━━━━━━━━━━━━
 
-1. CORRECTION DES XPATH
-   ━━━━━━━━━━━━━━━━━━━━━━
+PROBLÈME N°3 : Optimisation Selenium
 
-Rechercher tous les XPath invalides du projet.
+Je veux :
 
-Exemple incorrect :
-
-//*[contains(.,'Contacter l'agence')]
-
-Exemples corrects :
-
-//*[contains(text(),"Contacter l'agence")]
-
-ou
-
-//*[contains(., "Contacter l'agence")]
-
-Vérifier tous les XPath utilisés dans :
-
-* contact_manager.py
-* scraper.py
-
-et les corriger.
+* désactiver les images
+* désactiver les notifications
+* désactiver les animations
+* utiliser page_load_strategy='eager'
+* réduire les temps de chargement
+* supprimer les waits inutiles
 
 ━━━━━━━━━━━━━━━━━━━━━━
-2. GESTION DES ERREURS UNICODE
-━━━━━━━━━━━━━━━━━━━━━━
 
-Au démarrage du programme :
-
-```python
-import sys
-
-try:
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
-except:
-    pass
-```
+PROBLÈME N°4 : Robustesse
 
 Créer :
 
-```python
-def safe_log(text):
-    try:
-        return str(text)
-    except:
-        return repr(text)
-```
+safe_find_element()
+safe_click()
+safe_send_keys()
 
-Tous les logger.info(), logger.warning() et logger.error()
-affichant du texte provenant du site doivent utiliser safe_log().
+avec retry automatique.
 
-Le logger ne doit jamais provoquer une exception.
-
-━━━━━━━━━━━━━━━━━━━━━━
-3. DEBUG DES CHAMPS DU FORMULAIRE
-━━━━━━━━━━━━━━━━━━━━━━
-
-Juste avant le remplissage :
-
-Logger :
-
-* URL actuelle
-* titre de la page
-
-Puis :
-
-```python
-len(driver.find_elements(By.NAME, "firstName"))
-len(driver.find_elements(By.NAME, "lastName"))
-len(driver.find_elements(By.NAME, "email"))
-len(driver.find_elements(By.NAME, "phoneNumber"))
-```
-
-Logger les résultats.
-
-━━━━━━━━━━━━━━━━━━━━━━
-4. ATTENTE DU FORMULAIRE
-━━━━━━━━━━━━━━━━━━━━━━
-
-Si un champ est absent :
-
-Attendre jusqu'à 15 secondes :
-
-```python
-WebDriverWait(driver, 15).until(
-    EC.presence_of_element_located(
-        (By.NAME, "firstName")
-    )
-)
-```
-
-Même logique pour :
-
-* lastName
-* email
-* phoneNumber
-
-━━━━━━━━━━━━━━━━━━━━━━
-5. INVENTAIRE COMPLET DES INPUTS
-━━━━━━━━━━━━━━━━━━━━━━
-
-Juste avant le remplissage :
-
-Logger TOUS les inputs :
-
-* tag
-* name
-* id
-* type
-* placeholder
-* value
-* visible
-* enabled
-
-afin de vérifier si React remplace les champs.
-
-━━━━━━━━━━━━━━━━━━━━━━
-6. VERIFICATION DU REMPLISSAGE
-━━━━━━━━━━━━━━━━━━━━━━
-
-Avant chaque remplissage :
-
-Logger :
-
-* is_displayed()
-* is_enabled()
-* valeur actuelle
-
-Après :
-
-```python
-send_keys(...)
-```
-
-Lire :
-
-```python
-element.get_attribute("value")
-```
-
-et logger :
-
-* valeur après remplissage
-
-━━━━━━━━━━━━━━━━━━━━━━
-7. FALLBACK JAVASCRIPT
-━━━━━━━━━━━━━━━━━━━━━━
-
-Si send_keys échoue :
-
-```python
-driver.execute_script(
-    "arguments[0].value = arguments[1]",
-    element,
-    valeur
-)
-```
-
-Puis vérifier à nouveau la valeur.
-
-━━━━━━━━━━━━━━━━━━━━━━
-8. USERCENTRICS
-━━━━━━━━━━━━━━━━━━━━━━
-
-Créer :
-
-```python
-fermer_popup_usercentrics(driver)
-```
-
-À appeler :
-
-* après driver.get()
-* avant "Contacter l'agence"
-* avant "Ajouter un message"
-* avant "Envoyer"
-
-La fonction doit :
-
-* cliquer sur OK si présent
-* sinon supprimer usercentrics-root
-* logger le résultat
-
-━━━━━━━━━━━━━━━━━━━━━━
-9. SCREENSHOTS AUTOMATIQUES
-━━━━━━━━━━━━━━━━━━━━━━
-
-Si :
-
-* firstName introuvable
-* lastName introuvable
-* email introuvable
-* phoneNumber introuvable
-
-Créer automatiquement :
-
-screenshots/champs_introuvables.png
-
-et
-
-debug/champs_introuvables.html
-
-━━━━━━━━━━━━━━━━━━━━━━
-10. GESTION ROBUSTE DES ERREURS
-━━━━━━━━━━━━━━━━━━━━━━
-
-Capturer :
+Ne jamais faire planter le programme sur :
 
 * NoSuchElementException
 * TimeoutException
 * StaleElementReferenceException
 * ElementClickInterceptedException
 * InvalidSelectorException
-* WebDriverException
-* Exception
 
-Le bot ne doit jamais s'arrêter sur une seule annonce.
-
-En cas d'erreur :
-
-* logger l'erreur
-* enregistrer screenshot
-* enregistrer HTML
-* passer à l'annonce suivante
+Passer automatiquement à l'annonce suivante.
 
 ━━━━━━━━━━━━━━━━━━━━━━
-11. RAPPORT FINAL
+
+PROBLÈME N°5 : Diagnostic formulaire
+
+Ajouter un mode debug qui affiche :
+
+* tous les inputs
+* name
+* id
+* placeholder
+* type
+* visible
+* enabled
+
+avant remplissage.
+
+Sauvegarder automatiquement :
+
+screenshots/debug_formulaire.png
+
+et
+
+debug/formulaire.html
+
+si le remplissage échoue.
+
 ━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLÈME N°6 : Rapport final
 
 Afficher :
 
+* temps de recherche
+* temps de scraping
+* temps de contact
 * annonces trouvées
-* annonces analysées
 * annonces contactées
 * annonces échouées
 
-et la liste des erreurs rencontrées.
+et les erreurs rencontrées.
 
-Je veux le code complet des modifications à apporter dans :
+Je veux le code complet corrigé pour :
 
-* contact_manager.py
+* logger_config.py
+* city_resolver.py
 * scraper.py
+* contact_manager.py
 * main.py
-  afin d'identifier précisément la cause des échecs et rendre le bot robuste.
+
+avec priorité maximale sur la vitesse et la stabilité.
