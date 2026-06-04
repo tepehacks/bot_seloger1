@@ -71,6 +71,65 @@ def _generer_message(prix_str: str) -> str:
         "Cordialement"
     )
 
+def _extraire_etage(soup, texte_page: str) -> str:
+    """
+    Extrait l'étage de l'appartement depuis plusieurs sources SeLoger.
+
+    Priorité :
+      1. data-testid='cdp-features' — "Dernier étage, 3ème étage/3 étages"
+      2. Keyfacts — "Étage 3/3"
+      3. Regex texte — "au 3e étage", "3ème étage", "au 3e et dernier étage"
+      4. RDC
+    """
+    def _formater(n: int, dernier: bool = False) -> str:
+        suffix = "er" if n == 1 else "ème"
+        base = f"{n}{suffix} étage"
+        return f"{base} (dernier)" if dernier else base
+
+    # Priorité 1 : data-testid='cdp-features'
+    # Contient "Dernier étage, 3ème étage/3 étages" ou "3ème étage/3 étages"
+    try:
+        features_el = soup.find(attrs={"data-testid": "cdp-features"})
+        if features_el:
+            texte_feat = features_el.get_text(" ", strip=True)
+            # "Dernier étage, 3ème étage/3 étages"
+            m = re.search(r'[Dd]ernier\s+[eé]tage[,\s]+(\d+)[eè]me?\s+[eé]tage', texte_feat, re.I)
+            if m:
+                return _formater(int(m.group(1)), dernier=True)
+            # "3ème étage/3 étages"
+            m = re.search(r'(\d+)[eè]me?\s+[eé]tage\s*/\s*\d+', texte_feat, re.I)
+            if m:
+                return _formater(int(m.group(1)))
+            # "Dernier étage" seul
+            if re.search(r'[Dd]ernier\s+[eé]tage', texte_feat):
+                return "Dernier étage"
+    except Exception:
+        pass
+
+    # Priorité 2 : keyfacts "Étage X/Y"
+    m = re.search(r'[Éé]tage\s+(\d+)/(\d+)', texte_page)
+    if m:
+        floor = int(m.group(1))
+        total = int(m.group(2))
+        return _formater(floor, dernier=(floor == total))
+
+    # Priorité 3 : regex texte
+    # "au 3e étage", "au 3ème étage", "au 3e et dernier étage"
+    m = re.search(r'au\s+(\d+)\s*(?:er|[eè]me?|ième?)?\s*(?:et\s+dernier\s+)?[eé]tage', texte_page, re.I)
+    if m:
+        return _formater(int(m.group(1)), dernier=bool(re.search(r'dernier', m.group(0), re.I)))
+    # "3ème étage" sans "au"
+    m = re.search(r'\b(\d+)\s*(?:er|[eè]me?|ième?)\s+[eé]tage', texte_page, re.I)
+    if m:
+        return _formater(int(m.group(1)))
+
+    # Priorité 4 : RDC
+    if re.search(r'rez[.\s-]*de[.\s-]*chauss[eé]e|RDC|\brez\b', texte_page, re.I):
+        return "RDC"
+
+    return ""
+
+
 _MOTS_CLES_CONTACT = [
     "Contacter", "Contact", "Envoyer", "Message",
     "Je suis interesse", "Demande", "Prendre contact", "Ecrire",
@@ -245,7 +304,7 @@ class ContactManager:
 
             self._debug_avant_remplissage()
             self._logger_tous_champs()
-            self._remplir_formulaire(annonce.prix, mode=mode)
+            self._remplir_formulaire(annonce.prix, mode=mode, annonce=annonce)
 
             if envoyer_message:
                 self._cliquer_envoyer()
@@ -280,6 +339,29 @@ class ContactManager:
         except Exception:
             return
 
+        # ── Strategie 0 : URL — type_bien et transaction fiables a 100% ────────
+        # Pattern SeLoger : /annonces/(achat|location)/(appartement|maison|...)/
+        m_url = re.search(r'/annonces/(achat|location)/([^/]+)/', annonce.lien or "", re.I)
+        if m_url:
+            tx_raw   = m_url.group(1).lower()
+            type_raw = m_url.group(2).lower()
+            if not annonce.transaction:
+                annonce.transaction = "Achat" if tx_raw == "achat" else "Location"
+            if not annonce.type_bien:
+                _TYPE_MAP = {
+                    "appartement": "Appartement",
+                    "maison":       "Maison",
+                    "studio":       "Studio",
+                    "loft":         "Loft",
+                    "duplex":       "Duplex",
+                    "villa":        "Villa",
+                    "terrain":      "Terrain",
+                    "local":        "Local commercial",
+                    "bureau":       "Bureau",
+                    "parking":      "Parking",
+                }
+                annonce.type_bien = _TYPE_MAP.get(type_raw, type_raw.capitalize())
+
         # ── Strategie 1 : __NEXT_DATA__ (Next.js) ────────────────────────────
         next_script = soup.find("script", id="__NEXT_DATA__")
         if next_script:
@@ -302,6 +384,25 @@ class ContactManager:
                             or classified.get("name")
                             or ""
                         )
+                    if not annonce.type_bien:
+                        t = (
+                            classified.get("estateType")
+                            or classified.get("propertyType")
+                            or classified.get("typeLogement")
+                            or classified.get("type")
+                            or ""
+                        )
+                        if t:
+                            annonce.type_bien = str(t)
+                    if not annonce.transaction:
+                        tx = (
+                            classified.get("transactionType")
+                            or classified.get("distributionType")
+                            or classified.get("transaction")
+                            or ""
+                        )
+                        if tx:
+                            annonce.transaction = str(tx)
                     if not annonce.prix:
                         prix = (
                             classified.get("price")
@@ -327,6 +428,24 @@ class ContactManager:
                         )
                         if pieces:
                             annonce.pieces = str(pieces)
+                    if not annonce.chambres:
+                        ch = (
+                            classified.get("bedroomsQuantity")
+                            or classified.get("bedrooms")
+                            or classified.get("nbBedrooms")
+                            or classified.get("numberOfBedrooms")
+                        )
+                        if ch:
+                            annonce.chambres = str(ch)
+                    if not annonce.etage:
+                        fl = (
+                            classified.get("floor")
+                            or classified.get("floorNumber")
+                            or classified.get("floorLevel")
+                            or classified.get("etage")
+                        )
+                        if fl is not None:
+                            annonce.etage = str(fl)
                     if not annonce.localisation:
                         loc = classified.get("location", {})
                         if isinstance(loc, dict):
@@ -414,15 +533,225 @@ class ContactManager:
             if m:
                 annonce.localisation = m.group(1).strip()
 
+        # ── Extraction avancée depuis le texte de la page ─────────────────────
+        texte_page = soup.get_text(" ", strip=True)
+
+        # Type de bien : depuis le titre "Appartement", "Maison", "Studio"...
+        if not annonce.type_bien:
+            for mot, label in [
+                ("studio",      "Studio"),
+                ("appartement", "Appartement"),
+                ("maison",      "Maison"),
+                ("villa",       "Villa"),
+                ("loft",        "Loft"),
+                ("duplex",      "Duplex"),
+                ("terrain",     "Terrain"),
+                ("local",       "Local commercial"),
+                ("bureau",      "Bureau"),
+            ]:
+                if re.search(mot, annonce.titre or texte_page[:200], re.I):
+                    annonce.type_bien = label
+                    break
+
+        # Transaction : depuis le titre ou texte
+        if not annonce.transaction:
+            if re.search(r'\bvente\b|\bachat\b|\bvendre\b|\ba vendre\b', texte_page[:300], re.I):
+                annonce.transaction = "Achat"
+            elif re.search(r'\blocation\b|\blouer\b|\ba louer\b', texte_page[:300], re.I):
+                annonce.transaction = "Location"
+
+        # Code postal : "(52120)" dans la localisation ou le texte de la page
+        if not annonce.code_postal:
+            for source in [annonce.localisation, annonce.titre, texte_page[:500]]:
+                m = re.search(r'\((\d{5})\)', source or "")
+                if m:
+                    annonce.code_postal = m.group(1)
+                    if source == annonce.localisation:
+                        annonce.localisation = re.sub(
+                            r'\s*\(\d{5}\)', '', annonce.localisation
+                        ).strip()
+                    break
+
+        # Pièces : "X pièce(s)" dans le texte
+        if not annonce.pieces:
+            m = re.search(r'(\d+)\s*pi[eè]ce', texte_page, re.I)
+            if m:
+                annonce.pieces = m.group(1)
+
+        # Chambres : "X chambre(s)" dans le texte
+        if not annonce.chambres:
+            m = re.search(r'(\d+)\s*chambre', texte_page, re.I)
+            if m:
+                annonce.chambres = m.group(1)
+
+        # Étage de l'appartement (pas le nb d'étages du bâtiment)
+        if not annonce.etage:
+            annonce.etage = _extraire_etage(soup, texte_page)
+
+        # Surface : fallback depuis "X m²" dans le texte
+        if not annonce.surface:
+            m = re.search(r'(\d+)\s*m[²2]', texte_page)
+            if m:
+                annonce.surface = m.group(1)
+
+        # Prix m² du bien
+        if not annonce.prix_m2:
+            m = re.search(
+                r'([\d\s\u00A0\u202F]+[,.]?\d*)\s*€\s*/\s*m[²2]',
+                texte_page
+            )
+            if m:
+                brut = m.group(1).strip()
+                annonce.prix_m2 = re.sub(r'[\s\u00A0\u202F]', '', brut).replace(',', '.')
+
+        # Prix m² région min et max
+        # Structure réelle SeLoger :
+        #   "Valeur la plus basse de la région"  → nombre juste après
+        #   "Valeur la plus élevée de la région" → nombre juste après
+        def _extraire_valeur_apres_label(label: str, texte: str) -> str:
+            m = re.search(
+                re.escape(label) + r'[\s\S]{0,60}?([\d\s\u00A0\u202F]+[,.]?\d*)\s*€\s*/\s*m[²2]',
+                texte, re.I
+            )
+            if m:
+                brut = m.group(1).strip()
+                return re.sub(r'[\s\u00A0\u202F]', '', brut).replace(',', '.')
+            return ""
+
+        if not annonce.prix_m2_region_min:
+            annonce.prix_m2_region_min = _extraire_valeur_apres_label(
+                "Valeur la plus basse de la région", texte_page
+            )
+        if not annonce.prix_m2_region_max:
+            annonce.prix_m2_region_max = _extraire_valeur_apres_label(
+                "Valeur la plus élevée de la région", texte_page
+            )
+
+        # DPE et GES — via data-testid='cdp-preview-scale-highlighted'
+        # Structure SeLoger : premier bloc = DPE, second bloc = GES
+        # Chaque bloc contient un h3 avec le titre et un élément highlighted avec la lettre
+        dpe_ges_els = soup.find_all(attrs={"data-testid": "cdp-preview-scale-highlighted"})
+        if len(dpe_ges_els) >= 1 and not annonce.dpe:
+            lettre = dpe_ges_els[0].get_text(strip=True).upper()
+            if re.match(r'^[A-G]$', lettre):
+                annonce.dpe = lettre
+        if len(dpe_ges_els) >= 2 and not annonce.ges:
+            lettre = dpe_ges_els[1].get_text(strip=True).upper()
+            if re.match(r'^[A-G]$', lettre):
+                annonce.ges = lettre
+        # Fallback regex si data-testid absent
+        if not annonce.dpe:
+            m = re.search(r'DPE\s+Classe\s+([A-G])', texte_page, re.I)
+            if not m:
+                m = re.search(r'Diagnostic de performance[^A-G]{0,200}([A-G])\b', texte_page, re.I | re.S)
+            if m:
+                annonce.dpe = m.group(1).upper()
+        if not annonce.ges:
+            m = re.search(r'GES\s+Classe\s+([A-G])', texte_page, re.I)
+            if not m:
+                m = re.search(r"[Ii]ndice d.émission[^A-G]{0,200}([A-G])\b", texte_page, re.I | re.S)
+            if m:
+                annonce.ges = m.group(1).upper()
+
+        # Téléphone agence — clic sur "Appeler" pour révéler le numéro
+        if not annonce.telephone_agence:
+            annonce.telephone_agence = self._extraire_telephone_agence()
+
         # Fallback prix : extraire via Selenium (4 strategies hybrides)
         if not annonce.prix:
             annonce.prix = extraire_prix(self.driver)
 
+        # Prix proposé = prix de base × 0.65 (-35%)
+        if not annonce.prix_propose and annonce.prix:
+            prix_brut = re.sub(r'[^\d]', '', annonce.prix)
+            if prix_brut:
+                try:
+                    prix_propose = int(int(prix_brut) * 0.65)
+                    annonce.prix_propose = f"{prix_propose:,}".replace(",", " ")
+                except ValueError:
+                    pass
+
         logger.info(
-            f"Annonce enrichie : '{annonce.titre[:40]}' | "
-            f"prix={annonce.prix} | surface={annonce.surface} | "
-            f"pieces={annonce.pieces} | ville={annonce.localisation}"
+            f"Annonce enrichie : type={annonce.type_bien} | tx={annonce.transaction} | "
+            f"prix={annonce.prix} | offre={annonce.prix_propose} | "
+            f"surface={annonce.surface} | pieces={annonce.pieces} | "
+            f"chambres={annonce.chambres} | etage={annonce.etage} | "
+            f"ville={annonce.localisation} ({annonce.code_postal}) | "
+            f"m²={annonce.prix_m2} | region=[{annonce.prix_m2_region_min}-{annonce.prix_m2_region_max}] | "
+            f"DPE={annonce.dpe} GES={annonce.ges}"
         )
+
+    # ── Extraction téléphone agence ───────────────────────────────────────────
+
+    def _extraire_telephone_agence(self) -> str:
+        """
+        Clique sur le bouton 'Appeler' pour révéler le numéro de l'agence,
+        puis extrait le numéro affiché.
+
+        SeLoger charge le numéro dynamiquement via JS lors du clic.
+        Sélecteur stable : data-testid='cdp-contacting-call-button'
+        """
+        try:
+            btn = WebDriverWait(self.driver, 5).until(
+                EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "[data-testid='cdp-contacting-call-button']")
+                )
+            )
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block:'center'});", btn
+            )
+            self.driver.execute_script("arguments[0].click();", btn)
+            logger.info("Clic bouton 'Appeler' effectue.")
+
+            # Attendre que le numéro apparaisse dans le bouton ou un élément adjacent
+            time.sleep(1.5)
+
+            # Chercher le numéro dans la page après le clic
+            # SeLoger remplace le bouton ou affiche le numéro dans un span/div voisin
+            for sel in [
+                "[data-testid='cdp-contacting-call-button']",
+                "[data-testid='aviv.CDP.Contacting.ProviderSection.ContactCard.PhoneButton']",
+                "a[href^='tel:']",
+            ]:
+                try:
+                    el = self.driver.find_element(By.CSS_SELECTOR, sel)
+                    # Cas 1 : lien tel:
+                    href = el.get_attribute("href") or ""
+                    if href.startswith("tel:"):
+                        tel = href.replace("tel:", "").strip()
+                        logger.info(f"Telephone agence (tel: href) : {tel}")
+                        return tel
+                    # Cas 2 : texte du bouton a changé
+                    texte = (el.text or "").strip()
+                    m = re.search(r'(?:\+33|0)[1-9](?:[\s\.\-]?\d{2}){4}', texte)
+                    if m:
+                        tel = re.sub(r'[\s\.\-]', '', m.group(0))
+                        logger.info(f"Telephone agence (texte bouton) : {tel}")
+                        return tel
+                except (NoSuchElementException, StaleElementReferenceException):
+                    continue
+
+            # Dernière chance : regex dans le texte de la page entière
+            try:
+                texte_page = self.driver.find_element(By.TAG_NAME, "body").text
+                m = re.search(
+                    r'(?:\+33\s?|0)[1-9](?:[\s\.\-]?\d{2}){4}',
+                    texte_page[texte_page.find("Appeler"):texte_page.find("Appeler") + 300]
+                    if "Appeler" in texte_page else ""
+                )
+                if m:
+                    tel = re.sub(r'[\s\.\-]', '', m.group(0))
+                    logger.info(f"Telephone agence (regex page) : {tel}")
+                    return tel
+            except Exception:
+                pass
+
+        except (TimeoutException, NoSuchElementException):
+            logger.info("Bouton 'Appeler' absent — telephone agence non disponible.")
+        except Exception as exc:
+            logger.warning(f"Erreur extraction telephone agence : {exc}")
+
+        return ""
 
     # ── Navigation ────────────────────────────────────────────────────────────
 
@@ -660,12 +989,10 @@ class ContactManager:
         except Exception:
             pass
 
-    def _remplir_formulaire(self, prix_str: str = "", mode: str = "complet") -> None:
+    def _remplir_formulaire(self, prix_str: str = "", mode: str = "complet", annonce=None) -> None:
         if mode == "connecte":
-            # Utilisateur deja connecte : infos personnelles deja presentes,
-            # on cherche directement "Ajouter un message" puis on remplit le textarea.
             logger.info("Remplissage mode connecte : message uniquement.")
-            ok_message = self._remplir_champ_message(prix_str)
+            ok_message = self._remplir_champ_message(prix_str, annonce=annonce)
             if not ok_message:
                 logger.warning("Remplissage message echoue (mode connecte).")
                 self._sauvegarder_debug_formulaire()
@@ -676,9 +1003,8 @@ class ContactManager:
         ok_nom       = self._remplir_champ_nom()
         ok_email     = self._remplir_champ_email()
         ok_telephone = self._remplir_champ_telephone()
-        ok_message   = self._remplir_champ_message(prix_str)
+        ok_message   = self._remplir_champ_message(prix_str, annonce=annonce)
 
-        # Si au moins un champ critique a echoue → sauvegarder debug
         if not (ok_prenom and ok_email):
             logger.warning("Remplissage partiel — sauvegarde debug formulaire.")
             self._sauvegarder_debug_formulaire()
@@ -942,7 +1268,7 @@ class ContactManager:
             logger.warning("Textarea introuvable")
             return False
 
-    def _remplir_champ_message(self, prix_str: str = "") -> bool:
+    def _remplir_champ_message(self, prix_str: str = "", annonce=None) -> bool:
         """
         Flux correct SeLoger :
           1. Cliquer "Ajouter un message" pour faire apparaitre le textarea
@@ -950,6 +1276,17 @@ class ContactManager:
           3. "Contacter l'agence" est clique par _cliquer_envoyer() apres
         """
         message = _generer_message(prix_str)
+        # Stocker le message dans l'annonce pour l'Excel
+        if annonce is not None:
+            annonce.message_envoye = message
+        # Afficher le prix proposé dans la console
+        m_offre = re.search(r"offre d'achat a ([\d\s]+\u20ac)", message)
+        if m_offre:
+            logger.info(f"Prix propose : {m_offre.group(1)}")
+            print(f"[OFFRE] Prix propose : {m_offre.group(1)}")
+        else:
+            logger.info("Message sans offre de prix (prix inconnu)")
+            print("[OFFRE] Message sans offre de prix")
         logger.info(f"Message genere : {message[:60]}...")
 
         # ── Etape 1 : cliquer "Ajouter un message" ────────────────────────────

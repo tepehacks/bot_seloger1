@@ -180,11 +180,26 @@ def rechercher_annonces(
                 logger.info("  Doublon ignore.")
                 compteurs["doublon"] += 1
                 excel.enregistrer_annonce(
-                    titre=annonce.titre, prix=annonce.prix,
-                    surface=annonce.surface, pieces=annonce.pieces,
-                    ville=annonce.localisation or ville, lien=annonce.lien,
+                    lien=annonce.lien,
+                    type_bien=annonce.type_bien,
+                    transaction=annonce.transaction,
+                    prix=annonce.prix,
+                    prix_propose=annonce.prix_propose,
+                    surface=annonce.surface,
+                    prix_m2=annonce.prix_m2,
+                    prix_m2_region_min=annonce.prix_m2_region_min,
+                    prix_m2_region_max=annonce.prix_m2_region_max,
+                    pieces=annonce.pieces,
+                    chambres=annonce.chambres,
+                    etage=annonce.etage,
+                    ville=annonce.localisation or ville,
+                    code_postal=annonce.code_postal,
+                    dpe=annonce.dpe,
+                    ges=annonce.ges,
                     agence=annonce.agence or annonce.proprietaire,
-                    message_envoye="", statut="Doublon",
+                    telephone_agence=annonce.telephone_agence,
+                    message_envoye=annonce.message_envoye,
+                    statut="Doublon",
                 )
                 continue
 
@@ -198,13 +213,27 @@ def rechercher_annonces(
                 logger.error(f"Erreur inattendue sur {annonce.lien} : {exc}")
                 succes, statut = False, f"Erreur : {type(exc).__name__}"
 
-            message_enregistre = MESSAGE_CONTACT if succes and envoyer_message else ""
             excel.enregistrer_annonce(
-                titre=annonce.titre, prix=annonce.prix,
-                surface=annonce.surface, pieces=annonce.pieces,
-                ville=annonce.localisation or ville, lien=annonce.lien,
+                lien=annonce.lien,
+                type_bien=annonce.type_bien,
+                transaction=annonce.transaction,
+                prix=annonce.prix,
+                prix_propose=annonce.prix_propose,
+                surface=annonce.surface,
+                prix_m2=annonce.prix_m2,
+                prix_m2_region_min=annonce.prix_m2_region_min,
+                prix_m2_region_max=annonce.prix_m2_region_max,
+                pieces=annonce.pieces,
+                chambres=annonce.chambres,
+                etage=annonce.etage,
+                ville=annonce.localisation or ville,
+                code_postal=annonce.code_postal,
+                dpe=annonce.dpe,
+                ges=annonce.ges,
                 agence=annonce.agence or annonce.proprietaire,
-                message_envoye=message_enregistre, statut=statut,
+                telephone_agence=annonce.telephone_agence,
+                message_envoye=annonce.message_envoye,
+                statut=statut,
             )
 
             if succes:
@@ -272,7 +301,7 @@ def _afficher_rapport(
 
 if __name__ == "__main__":
     rechercher_annonces(
-        ville="Paris",
+        ville="Bordeaux",
         transaction="achat",
         type_logement="appartement",
         budget_max=70000,

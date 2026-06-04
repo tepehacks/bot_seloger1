@@ -123,6 +123,27 @@ def _extraire_annonce(href: str, session: requests.Session) -> Optional[Annonce]
     soup = BeautifulSoup(resp.text, "lxml")
     annonce = Annonce(lien=href)
 
+    # ── Stratégie 0 : URL — type_bien et transaction toujours présents ────────
+    # Pattern : /annonces/(achat|location)/(appartement|maison|...)/(ville)/
+    m_url = re.search(r'/annonces/(achat|location)/([^/]+)/', href, re.I)
+    if m_url:
+        tx_raw = m_url.group(1).lower()
+        type_raw = m_url.group(2).lower()
+        annonce.transaction = "Achat" if tx_raw == "achat" else "Location"
+        _TYPE_MAP = {
+            "appartement": "Appartement",
+            "maison":       "Maison",
+            "studio":       "Studio",
+            "loft":         "Loft",
+            "duplex":       "Duplex",
+            "villa":        "Villa",
+            "terrain":      "Terrain",
+            "local":        "Local commercial",
+            "bureau":       "Bureau",
+            "parking":      "Parking",
+        }
+        annonce.type_bien = _TYPE_MAP.get(type_raw, type_raw.capitalize())
+
     # ── Stratégie 1 : JSON-LD ─────────────────────────────────────────────────
     _extraire_jsonld(soup, annonce)
 
@@ -281,3 +302,36 @@ def _extraire_css(soup: BeautifulSoup, annonce: Annonce) -> None:
             "[class*='agency']",
             "[class*='agence']",
         ])
+
+    # Étage
+    if not annonce.etage:
+        from contact_manager import _extraire_etage
+        texte = soup.get_text(" ", strip=True)
+        annonce.etage = _extraire_etage(soup, texte)
+
+    # DPE et GES — data-testid='cdp-preview-scale-highlighted'
+    # Premier bloc = DPE, second bloc = GES (structure SeLoger stable)
+    dpe_ges_els = soup.find_all(attrs={"data-testid": "cdp-preview-scale-highlighted"})
+    if len(dpe_ges_els) >= 1 and not annonce.dpe:
+        lettre = dpe_ges_els[0].get_text(strip=True).upper()
+        if re.match(r'^[A-G]$', lettre):
+            annonce.dpe = lettre
+    if len(dpe_ges_els) >= 2 and not annonce.ges:
+        lettre = dpe_ges_els[1].get_text(strip=True).upper()
+        if re.match(r'^[A-G]$', lettre):
+            annonce.ges = lettre
+    # Fallback regex
+    if not annonce.dpe:
+        texte = soup.get_text(" ", strip=True)
+        m = re.search(r'DPE\s+Classe\s+([A-G])', texte, re.I)
+        if not m:
+            m = re.search(r'Diagnostic de performance[^A-G]{0,200}([A-G])\b', texte, re.I | re.S)
+        if m:
+            annonce.dpe = m.group(1).upper()
+    if not annonce.ges:
+        texte = soup.get_text(" ", strip=True) if not annonce.dpe else texte
+        m = re.search(r'GES\s+Classe\s+([A-G])', texte, re.I)
+        if not m:
+            m = re.search(r"[Ii]ndice d.émission[^A-G]{0,200}([A-G])\b", texte, re.I | re.S)
+        if m:
+            annonce.ges = m.group(1).upper()

@@ -52,14 +52,27 @@ logger = setup_logger("scraper")
 class Annonce:
     """Représente une annonce immobilière extraite de SeLoger."""
 
-    titre:        str = ""
-    prix:         str = ""
-    surface:      str = ""
-    pieces:       str = ""
-    localisation: str = ""
-    lien:         str = ""
-    agence:       str = ""
-    proprietaire: str = ""
+    titre:              str = ""
+    type_bien:          str = ""   # Appartement, Maison, Studio…
+    transaction:        str = ""   # Achat, Location
+    prix:               str = ""
+    prix_propose:       str = ""   # prix × 0.65 (offre -35%)
+    message_envoye:     str = ""   # message complet envoyé à l'agence
+    surface:            str = ""
+    pieces:             str = ""
+    chambres:           str = ""
+    etage:              str = ""   # étage de l'appt ou nb étages maison
+    localisation:       str = ""
+    code_postal:        str = ""
+    lien:               str = ""
+    agence:             str = ""
+    proprietaire:       str = ""
+    prix_m2:            str = ""
+    prix_m2_region_min: str = ""
+    prix_m2_region_max: str = ""
+    dpe:                str = ""
+    ges:                str = ""
+    telephone_agence:   str = ""
 
 
 class SeLogerScraper:
