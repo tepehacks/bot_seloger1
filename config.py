@@ -50,8 +50,17 @@ TRANSACTION_MAP: dict[str, str] = {
 TYPE_LOGEMENT_MAP: dict[str, str] = {
     "appartement":        "Apartment",
     "maison":             "House",
+    "immeuble":           "Building",
+    "terrain":            "Plot",
+    "parking":            "Parking",
     "appartement,maison": "House,Apartment",
     "maison,appartement": "House,Apartment",
+    "apartoumaison":      "House,Apartment",
+}
+
+TYPE_LOGEMENT_USE_FOR: dict[str, str] = {
+    "terrain": "Mixed,Living",
+    "parking": "Mixed,Living",
 }
 
 # ── Message de contact ────────────────────────────────────────────────────────

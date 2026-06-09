@@ -301,10 +301,10 @@ def _afficher_rapport(
 
 if __name__ == "__main__":
     rechercher_annonces(
-        ville="Bordeaux",
+        ville="Bordeaux",   #obligatoire   # "" si tu veux pas mettre pour les autres para*
         transaction="achat",
-        type_logement="appartement",
-        budget_max=70000,
+        type_logement="appartement",   #apartoumaison pour les deux pas appartementoumaison !!!!
+        budget_max=70000,   
         surface_min=30,
         pieces_min=2,
         chambres_min=1,

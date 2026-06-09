@@ -12,6 +12,7 @@ from config import (
     SELOGER_SEARCH_PATH,
     TRANSACTION_MAP,
     TYPE_LOGEMENT_MAP,
+    TYPE_LOGEMENT_USE_FOR,
 )
 from city_resolver import obtenir_code_ville
 from logger import setup_logger
@@ -82,6 +83,9 @@ def generer_url_seloger(
         "numberOfRoomsMin":    pieces_min,
         "numberOfBedroomsMin": chambres_min,
     }
+
+    if type_key in TYPE_LOGEMENT_USE_FOR:
+        params["useFor"] = TYPE_LOGEMENT_USE_FOR[type_key]
 
     url = f"{SELOGER_BASE_URL}{SELOGER_SEARCH_PATH}?{urlencode(params)}"
     logger.info(f"URL generee : {url}")
