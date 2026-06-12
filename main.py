@@ -312,6 +312,6 @@ if __name__ == "__main__":
         nom="Tepe",
         email="pierrealexandretepe6z@gmail.com",
         telephone="0767693603",
-        envoyer_message=False,   # mettre True pour envoyer réellement
+        envoyer_message=True,   # mettre True pour envoyer réellement
         nombre_messages=1,
     )

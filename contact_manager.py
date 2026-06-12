@@ -1148,7 +1148,7 @@ class ContactManager:
             # Strategie 3 : input visible precedant le hidden phoneNumber
             ("precedant hidden", lambda: self._trouver_input_et_remplir(
                 By.XPATH,
-                "//input[@name='phoneNumber']/preceding-sibling::input[not(@type='hidden')][last()]",
+                "(//input[@name='phoneNumber'])[last()]/preceding-sibling::input[not(@type='hidden')][1]",
                 "telephone (precedant hidden)"
             )),
             # Strategie 4 : JS React sur hidden phoneNumber

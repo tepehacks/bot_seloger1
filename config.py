@@ -15,7 +15,7 @@ LOGS_DIR        = BASE_DIR / "logs"
 EXCEL_FILE      = DATA_DIR / "annonces_contactees.xlsx"
 
 # ── Navigateur ────────────────────────────────────────────────────────────────
-HEADLESS: bool = True           # Mode sans fenêtre — gain de vitesse significatif
+HEADLESS: bool = False          # Mode sans fenêtre — gain de vitesse significatif
 WINDOW_WIDTH:  int = 1920
 WINDOW_HEIGHT: int = 1080
 PAGE_LOAD_TIMEOUT: int = 30     # secondes

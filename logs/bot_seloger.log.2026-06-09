@@ -1,0 +1,58 @@
+2026-06-09 17:45:28 | DEBUG    | city_resolver | Cache villes charge : 7 entree(s).
+2026-06-09 17:45:28 | INFO     | main | ============================================================
+2026-06-09 17:45:28 | INFO     | main | Démarrage du bot SeLoger
+2026-06-09 17:45:28 | INFO     | main | Critères : Mulhouse | achat | appartement | <=280000EUR | >=m2 | >=p | >=ch
+2026-06-09 17:45:28 | INFO     | main | Messages a envoyer : 5
+2026-06-09 17:45:28 | INFO     | main | ============================================================
+2026-06-09 17:45:28 | DEBUG    | excel_manager | Fichier Excel existant chargé : C:\Users\tepep\Documents\GitHub\bot_seloger1\data\annonces_contactees.xlsx
+2026-06-09 17:45:28 | DEBUG    | excel_manager | 2 lien(s) déjà enregistré(s).
+2026-06-09 17:45:28 | INFO     | main | 2 annonce(s) deja contactee(s) en base.
+2026-06-09 17:45:28 | INFO     | scraper | Démarrage de Chrome (headless, sans images)...
+2026-06-09 17:45:38 | INFO     | scraper | Chrome démarré avec succès.
+2026-06-09 17:45:38 | INFO     | city_resolver | Resolution du code SeLoger pour : 'Mulhouse'
+2026-06-09 17:46:04 | INFO     | city_resolver | Recherche du champ ville...
+2026-06-09 17:46:04 | INFO     | city_resolver | Champ trouve avec le selecteur : input[placeholder='Saisir le lieu ou le code postal']
+2026-06-09 17:46:41 | INFO     | city_resolver | Aucun code dans les suggestions — soumission du formulaire...
+2026-06-09 17:46:43 | INFO     | city_resolver | Code extrait depuis l'URL : AD08FR28526
+2026-06-09 17:46:43 | DEBUG    | city_resolver | Cache mis a jour : 'mulhouse' -> AD08FR28526
+2026-06-09 17:46:43 | INFO     | url_builder | URL generee : https://www.seloger.com/classified-search?distributionTypes=Buy&estateTypes=Apartment&locations=AD08FR28526&priceMax=280000&spaceMin=&numberOfRoomsMin=&numberOfBedroomsMin=
+2026-06-09 17:46:43 | INFO     | main | Temps recherche : 64.5s
+2026-06-09 17:46:43 | INFO     | scraper | URL générée : https://www.seloger.com/classified-search?distributionTypes=Buy&estateTypes=Apartment&locations=AD08FR28526&priceMax=280000&spaceMin=&numberOfRoomsMin=&numberOfBedroomsMin=
+2026-06-09 17:47:11 | INFO     | scraper | Collecte des liens — page 1...
+2026-06-09 17:47:11 | INFO     | scraper | Page 1 : 25 lien(s) trouvé(s).
+2026-06-09 17:47:11 | INFO     | scraper |   -> https://www.seloger.com/annonces/achat/appartement/mulhouse-68/coteaux-nord-est/265831885.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR28526%26priceMax%3D280000#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-09 17:47:11 | INFO     | scraper |   -> https://www.seloger.com/annonces/achat/appartement/mulhouse-68/271148073.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR28526%26priceMax%3D280000#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-09 17:47:11 | INFO     | scraper |   -> https://www.seloger.com/annonces/achat/appartement/mulhouse-68/266313947.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR28526%26priceMax%3D280000#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-09 17:47:37 | INFO     | scraper | Total liens collectés : 25
+2026-06-09 17:47:37 | INFO     | main | Temps recuperation annonces : 54.0s
+2026-06-09 17:47:37 | INFO     | main | Annonces trouvees : 25
+2026-06-09 17:47:37 | INFO     | main | 25 nouveaux lien(s) a analyser (0 doublon(s) ignores).
+2026-06-09 17:47:37 | INFO     | main | Limite appliquee : 5 annonce(s).
+2026-06-09 17:47:37 | INFO     | fetcher | Extraction de 5 fiche(s) — 6 workers parallèles.
+2026-06-09 17:47:39 | INFO     | fetcher |   OK : '' |  |  | 
+2026-06-09 17:47:40 | INFO     | fetcher |   OK : '' |  |  | 
+2026-06-09 17:47:40 | INFO     | fetcher |   OK : '' |  |  | 
+2026-06-09 17:47:40 | INFO     | fetcher |   OK : '' |  |  | 
+2026-06-09 17:47:40 | INFO     | fetcher |   OK : '' |  |  | 
+2026-06-09 17:47:40 | INFO     | fetcher | Extraction terminée : 5/5 réussies.
+2026-06-09 17:47:40 | INFO     | main | Temps extraction : 3.4s
+2026-06-09 17:47:40 | INFO     | main | Annonces analysees : 5
+2026-06-09 17:47:40 | INFO     | main | [1/5] https://www.seloger.com/annonces/achat/appartement/mulhouse-68/nordfeld-est/269150941.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR28526%26priceMax%3D280000#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-09 17:47:40 | INFO     | contact_manager | Contact : https://www.seloger.com/annonces/achat/appartement/mulhouse-68/nordfeld-est/269150941.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR28526%26priceMax%3D280000#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-09 17:47:41 | INFO     | contact_manager | Bloqueur Usercentrics installe.
+2026-06-09 17:48:03 | INFO     | contact_manager | Bouton 'Appeler' absent — telephone agence non disponible.
+2026-06-09 17:48:03 | INFO     | scraper | [PRIX OK] Strategie: css-1ln7jbg | Texte: '95\u202f000 €' | Valeur: 95000
+2026-06-09 17:48:03 | INFO     | contact_manager | Annonce enrichie : type=Appartement | tx=Achat | prix=95000 | offre=61 750 | surface=65 | pieces=2 | chambres=1 | etage=3ème étage (dernier) | ville= (68100) | m²=1462 | region=[830-1891] | DPE=E GES=E
+2026-06-09 17:48:33 | DEBUG    | city_resolver | Cache villes charge : 8 entree(s).
+2026-06-09 17:48:33 | INFO     | main | ============================================================
+2026-06-09 17:48:33 | INFO     | main | Démarrage du bot SeLoger
+2026-06-09 17:48:33 | INFO     | main | Critères : Mulhouse | achat | immeuble | <=280000EUR | >=m2 | >=p | >=ch
+2026-06-09 17:48:33 | INFO     | main | Messages a envoyer : 2
+2026-06-09 17:48:33 | INFO     | main | ============================================================
+2026-06-09 17:48:33 | DEBUG    | excel_manager | Fichier Excel existant chargé : C:\Users\tepep\Documents\GitHub\bot_seloger1\data\annonces_contactees.xlsx
+2026-06-09 17:48:33 | DEBUG    | excel_manager | 2 lien(s) déjà enregistré(s).
+2026-06-09 17:48:33 | INFO     | main | 2 annonce(s) deja contactee(s) en base.
+2026-06-09 17:48:33 | INFO     | scraper | Démarrage de Chrome (headless, sans images)...
+2026-06-09 17:48:35 | INFO     | scraper | Chrome démarré avec succès.
+2026-06-09 17:48:35 | ERROR    | main | Impossible de generer l'URL : Type de logement 'immeuble' inconnu. Valeurs acceptées : ['appartement', 'maison', 'appartement,maison', 'maison,appartement']
+2026-06-09 17:48:38 | INFO     | scraper | Navigateur fermé.
