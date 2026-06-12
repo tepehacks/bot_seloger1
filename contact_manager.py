@@ -155,6 +155,7 @@ _JS_BLOQUEUR_USERCENTRICS = """
 """
 
 # JS : remplissage d'un champ React en declenchant les evenements natifs
+# InputEvent (avec data + inputType) est requis par React 17+ pour declencher onChange
 _JS_REMPLIR_CHAMP = """
 const el = arguments[0];
 const val = arguments[1];
@@ -162,8 +163,9 @@ const setter = Object.getOwnPropertyDescriptor(
     window.HTMLInputElement.prototype, 'value'
 ).set;
 setter.call(el, val);
-el.dispatchEvent(new Event('input',  { bubbles: true }));
+el.dispatchEvent(new InputEvent('input',  { bubbles: true, cancelable: true, inputType: 'insertText', data: val }));
 el.dispatchEvent(new Event('change', { bubbles: true }));
+el.dispatchEvent(new Event('blur',   { bubbles: true }));
 """
 
 
@@ -1024,22 +1026,33 @@ class ContactManager:
         except Exception:
             pass
 
-        # Methode 1 : interaction clavier
+        # Methode 1 : interaction clavier + synchro React
+        # send_keys ecrit dans le DOM, mais React peut ignorer onChange
+        # → on force aussi la synchro JS apres la frappe
         try:
             el.click()
             el.send_keys(Keys.CONTROL + "a")
             el.send_keys(Keys.DELETE)
+            try:
+                el.clear()
+            except Exception:
+                pass
             for lettre in valeur:
                 el.send_keys(lettre)
                 time.sleep(random.uniform(0.03, 0.08))
+            # Synchro React : indispensable quand onChange n'est pas declenche par send_keys
+            try:
+                self.driver.execute_script(_JS_REMPLIR_CHAMP, el, valeur)
+            except Exception:
+                pass
             valeur_lue = el.get_attribute("value") or ""
-            logger.info(f"  [apres M1] value='{safe_log(valeur_lue)}'")
+            logger.info(f"  [apres M1+JS] value='{safe_log(valeur_lue)}'")
             if valeur_lue:
                 return True
         except Exception:
             pass
 
-        # Methode 2 : JS React natif (setter + events)
+        # Methode 2 : JS React natif (setter + InputEvent) — si M1 a completement echoue
         try:
             self.driver.execute_script(_JS_REMPLIR_CHAMP, el, valeur)
             valeur_lue = el.get_attribute("value") or ""
@@ -1128,32 +1141,41 @@ class ContactManager:
     def _remplir_champ_telephone(self) -> bool:
         """
         Strategies stables (pas d'IDs React ni de classes css-xxxxx) :
-          1. input[type='tel']  — attribut type stable
-          2. input[name='phoneNumber'] visible
-          3. input visible precedant le hidden phoneNumber
-          4. JS React natif sur le hidden phoneNumber
-          5. input texte visible sans name (dernier fallback)
+          1. input[autocomplete='tel'] — champ visible SeLoger (stable, aria-required)
+          2. input dans data-testid='cdp-contact-form-fields-phone' — conteneur stable
+          3. input[type='tel']  — attribut type stable
+          4. input[name='phoneNumber'] visible
+          5. input visible precedant le hidden phoneNumber via JS DOM traversal
+          6. input texte visible sans name (dernier fallback)
         """
         strategies = [
-            # Strategie 1 : type='tel' (attribut HTML stable)
+            # Strategie 1 : autocomplete='tel' — champ visible SeLoger (le plus stable)
+            # Le champ est type='text' avec autocomplete='tel' et aria-required='true'
+            ("autocomplete=tel", lambda: self._trouver_input_et_remplir(
+                By.XPATH,
+                "(//input[@autocomplete='tel'])[last()]",
+                "telephone (autocomplete=tel)"
+            )),
+            # Strategie 2 : conteneur data-testid stable
+            ("data-testid phone", lambda: self._trouver_input_et_remplir(
+                By.CSS_SELECTOR,
+                "[data-testid='cdp-contact-form-fields-phone'] input[type='text']:not([role='combobox'])",
+                "telephone (data-testid container)"
+            )),
+            # Strategie 3 : type='tel' (attribut HTML stable)
             ("tel", lambda: self._trouver_input_et_remplir(
                 By.CSS_SELECTOR, "input[type='tel']", "telephone (type=tel)"
             )),
-            # Strategie 2 : name='phoneNumber' visible
+            # Strategie 4 : name='phoneNumber' visible
             ("phoneNumber visible", lambda: self._trouver_input_et_remplir(
                 By.XPATH,
                 "(//input[@name='phoneNumber' and not(@type='hidden')])[last()]",
                 "telephone (name=phoneNumber visible)"
             )),
-            # Strategie 3 : input visible precedant le hidden phoneNumber
-            ("precedant hidden", lambda: self._trouver_input_et_remplir(
-                By.XPATH,
-                "(//input[@name='phoneNumber'])[last()]/preceding-sibling::input[not(@type='hidden')][1]",
-                "telephone (precedant hidden)"
-            )),
-            # Strategie 4 : JS React sur hidden phoneNumber
-            ("hidden JS", lambda: self._remplir_hidden_telephone()),
-            # Strategie 5 : input texte visible sans name
+            # Strategie 5 : input visible precedant le hidden phoneNumber via JS
+            # (XPath preceding-sibling echoue si les inputs ne sont pas freres directs)
+            ("precedant hidden JS", lambda: self._remplir_visible_avant_hidden()),
+            # Strategie 6 : input texte visible sans name (dernier fallback)
             ("sans name", lambda: self._remplir_input_texte_sans_name()),
         ]
 
@@ -1171,19 +1193,61 @@ class ContactManager:
         el = WebDriverWait(self.driver, 4).until(
             EC.presence_of_element_located((by, sel))
         )
-        if el.is_displayed() and el.is_enabled():
-            if self._remplir_element(el, self.telephone):
-                logger.info(f"Champ telephone rempli ({libelle}).")
-                return True
+        if not (el.is_displayed() and el.is_enabled()):
+            return False
+        # Scroll au champ pour s'assurer qu'il est dans la vue
+        try:
+            self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", el)
+            time.sleep(0.2)
+        except Exception:
+            pass
+        if self._remplir_element(el, self.telephone):
+            logger.info(f"Champ telephone rempli ({libelle}).")
+            return True
         return False
 
-    def _remplir_hidden_telephone(self) -> bool:
-        hidden = self.driver.find_element(
-            By.XPATH, "(//input[@name='phoneNumber'])[last()]"
-        )
-        self.driver.execute_script(_JS_REMPLIR_CHAMP, hidden, self.telephone)
-        logger.info("Champ telephone rempli (hidden JS).")
-        return True
+    def _remplir_visible_avant_hidden(self) -> bool:
+        """
+        Trouve le champ visible du telephone en remontant depuis le hidden phoneNumber.
+        Utilise JS pour traverser le DOM : cherche l'input[type='text'] visible
+        dans le meme conteneur que le hidden phoneNumber.
+        """
+        script = """
+        var hiddens = document.querySelectorAll('input[name="phoneNumber"]');
+        if (!hiddens.length) return null;
+        var hidden = hiddens[hiddens.length - 1];
+        // Remonter jusqu'au conteneur commun
+        var container = hidden.parentElement;
+        for (var i = 0; i < 5; i++) {
+            if (!container) break;
+            var inputs = container.querySelectorAll('input[type="text"]');
+            for (var j = inputs.length - 1; j >= 0; j--) {
+                var inp = inputs[j];
+                if (inp.offsetParent !== null && !inp.name && inp !== hidden) {
+                    return inp;
+                }
+            }
+            container = container.parentElement;
+        }
+        return null;
+        """
+        try:
+            el = self.driver.execute_script(script)
+            if el is None:
+                return False
+            if not (el.is_displayed() and el.is_enabled()):
+                return False
+            try:
+                self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", el)
+                time.sleep(0.2)
+            except Exception:
+                pass
+            if self._remplir_element(el, self.telephone):
+                logger.info("Champ telephone rempli (visible avant hidden).")
+                return True
+        except Exception:
+            pass
+        return False
 
     def _remplir_input_texte_sans_name(self) -> bool:
         inputs = self.driver.find_elements(

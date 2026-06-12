@@ -385,3 +385,263 @@ Je me pe...
 2026-06-12 18:48:27 | INFO     | main |   Temps envoi messages         : 142.3s
 2026-06-12 18:48:27 | INFO     | main |   Temps total                  : 215.4s
 2026-06-12 18:48:27 | INFO     | main | ============================================================
+2026-06-12 18:57:33 | DEBUG    | city_resolver | Cache villes charge : 8 entree(s).
+2026-06-12 18:57:33 | INFO     | main | ============================================================
+2026-06-12 18:57:33 | INFO     | main | Démarrage du bot SeLoger
+2026-06-12 18:57:33 | INFO     | main | Critères : Bordeaux | achat | appartement | <=70000EUR | >=30m2 | >=2p | >=1ch
+2026-06-12 18:57:33 | INFO     | main | Messages a envoyer : 1
+2026-06-12 18:57:33 | INFO     | main | ============================================================
+2026-06-12 18:57:33 | DEBUG    | excel_manager | Fichier Excel existant chargé : C:\Users\tepep\Documents\GitHub\bot_seloger1\data\annonces_contactees.xlsx
+2026-06-12 18:57:33 | DEBUG    | excel_manager | 3 lien(s) déjà enregistré(s).
+2026-06-12 18:57:33 | INFO     | main | 3 annonce(s) deja contactee(s) en base.
+2026-06-12 18:57:33 | INFO     | scraper | Démarrage de Chrome (headless, sans images)...
+2026-06-12 18:57:40 | INFO     | scraper | Chrome démarré avec succès.
+2026-06-12 18:57:40 | INFO     | city_resolver | Code ville depuis cache memoire : 'Bordeaux' -> AD08FR13100
+2026-06-12 18:57:40 | INFO     | url_builder | URL generee : https://www.seloger.com/classified-search?distributionTypes=Buy&estateTypes=Apartment&locations=AD08FR13100&priceMax=70000&spaceMin=30&numberOfRoomsMin=2&numberOfBedroomsMin=1
+2026-06-12 18:57:40 | INFO     | main | Temps recherche : 0.0s
+2026-06-12 18:57:40 | INFO     | scraper | URL générée : https://www.seloger.com/classified-search?distributionTypes=Buy&estateTypes=Apartment&locations=AD08FR13100&priceMax=70000&spaceMin=30&numberOfRoomsMin=2&numberOfBedroomsMin=1
+2026-06-12 18:58:11 | INFO     | scraper | Collecte des liens — page 1...
+2026-06-12 18:58:11 | INFO     | scraper | Page 1 : 15 lien(s) trouvé(s).
+2026-06-12 18:58:11 | INFO     | scraper |   -> https://www.seloger.com/annonces/achat/appartement/bordeaux-33/270569867.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 18:58:11 | INFO     | scraper |   -> https://www.seloger.com/annonces/achat/appartement/bordeaux-33/hotel-de-ville-quinconce-saint-seurin-fondaudege/251959881.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 18:58:11 | INFO     | scraper |   -> https://www.seloger.com/annonces/achat/appartement/bordeaux-33/grand-parc-chartrons-paul-doumer/263963347.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 18:58:37 | INFO     | scraper | Total liens collectés : 15
+2026-06-12 18:58:37 | INFO     | main | Temps recuperation annonces : 56.9s
+2026-06-12 18:58:37 | INFO     | main | Annonces trouvees : 15
+2026-06-12 18:58:37 | INFO     | main | 12 nouveaux lien(s) a analyser (3 doublon(s) ignores).
+2026-06-12 18:58:37 | INFO     | main | Limite appliquee : 1 annonce(s).
+2026-06-12 18:58:37 | INFO     | fetcher | Extraction de 1 fiche(s) — 6 workers parallèles.
+2026-06-12 18:58:39 | INFO     | fetcher |   OK : '' |  |  | 
+2026-06-12 18:58:39 | INFO     | fetcher | Extraction terminée : 1/1 réussies.
+2026-06-12 18:58:39 | INFO     | main | Temps extraction : 2.1s
+2026-06-12 18:58:39 | INFO     | main | Annonces analysees : 1
+2026-06-12 18:58:39 | INFO     | main | [1/1] https://www.seloger.com/annonces/achat/appartement/bordeaux-33/saint-bruno-saint-augustin/262972505.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 18:58:39 | INFO     | contact_manager | Contact : https://www.seloger.com/annonces/achat/appartement/bordeaux-33/saint-bruno-saint-augustin/262972505.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 18:58:40 | INFO     | contact_manager | Bloqueur Usercentrics installe.
+2026-06-12 18:59:02 | INFO     | contact_manager | Bouton 'Appeler' absent — telephone agence non disponible.
+2026-06-12 18:59:02 | INFO     | scraper | [PRIX OK] Strategie: css-1ln7jbg | Texte: 'Bouquet 28\u202f000 €' | Valeur: 28000
+2026-06-12 18:59:02 | INFO     | contact_manager | Annonce enrichie : type=Appartement | tx=Achat | prix=28000 | offre=18 200 | surface=87 | pieces=3 | chambres=1 | etage= | ville= (33000) | m²=425.08 | region=[2789-5908] | DPE=C GES=C
+2026-06-12 18:59:36 | WARNING  | contact_manager | Aucun bouton de contact trouve.
+2026-06-12 18:59:36 | INFO     | contact_manager | [DEBUG] URL   : https://www.seloger.com/annonces/achat/appartement/bordeaux-33/saint-bruno-saint-augustin/262972505.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 18:59:36 | INFO     | contact_manager | [DEBUG] Titre : Appartement à vendre T3/F3 65.87 m² 28000 € Saint Augustin - Tauzin - Alphonse Dupeux Bordeaux (33000)
+2026-06-12 18:59:36 | INFO     | contact_manager | [DEBUG] Inventaire complet des champs :
+2026-06-12 18:59:36 | INFO     | contact_manager |   <input> name='' | id='react-aria-_R_6aplehaecqkm_' | type='text' | placeholder='' | value='28 000' | visible=True | enabled=True
+2026-06-12 18:59:37 | INFO     | contact_manager |   <input> name='' | id='react-aria-_R_6qplehaecqkm_' | type='text' | placeholder='' | value='5 600' | visible=True | enabled=True
+2026-06-12 18:59:37 | INFO     | contact_manager |   <input> name='firstName' | id='react-aria-_R_18pmhaecqkm_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 18:59:37 | INFO     | contact_manager |   <input> name='lastName' | id='react-aria-_R_28pmhaecqkm_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 18:59:37 | INFO     | contact_manager |   <input> name='email' | id='react-aria-_R_cpmhaecqkm_' | type='email' | placeholder='exemple@domain.com' | value='' | visible=True | enabled=True
+2026-06-12 18:59:37 | INFO     | contact_manager |   <input> name='' | id='react-aria7481416455-_r_l_' | type='text' | placeholder='' | value='France +33' | visible=False | enabled=True
+2026-06-12 18:59:37 | INFO     | contact_manager |   <input> name='' | id='react-aria-_R_gpmhaecqkm_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 18:59:37 | INFO     | contact_manager |   <input> name='phoneNumber' | id='' | type='hidden' | placeholder='' | value='' | visible=False | enabled=True
+2026-06-12 18:59:37 | INFO     | contact_manager |   <input> name='isOwner' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 18:59:37 | INFO     | contact_manager |   <input> name='newsletterOptout' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 18:59:38 | INFO     | contact_manager |   <input> name='address' | id='react-aria7481416455-_r_2t_' | type='text' | placeholder='Ex : 2 rue des italiens, 75009 Paris' | value='' | visible=True | enabled=True
+2026-06-12 18:59:38 | INFO     | contact_manager |   <input> name='firstName' | id='react-aria7481416455-_r_12_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 18:59:38 | INFO     | contact_manager |   <input> name='lastName' | id='react-aria7481416455-_r_17_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 18:59:38 | INFO     | contact_manager |   <input> name='email' | id='react-aria7481416455-_r_1c_' | type='email' | placeholder='exemple@domain.com' | value='' | visible=True | enabled=True
+2026-06-12 18:59:38 | INFO     | contact_manager |   <input> name='' | id='react-aria7481416455-_r_1p_' | type='text' | placeholder='' | value='France +33' | visible=False | enabled=True
+2026-06-12 18:59:38 | INFO     | contact_manager |   <input> name='' | id='react-aria7481416455-_r_1h_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 18:59:38 | INFO     | contact_manager |   <input> name='phoneNumber' | id='' | type='hidden' | placeholder='' | value='' | visible=False | enabled=True
+2026-06-12 18:59:38 | INFO     | contact_manager |   <input> name='isOwner' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 18:59:38 | INFO     | contact_manager |   <input> name='newsletterOptout' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 18:59:43 | INFO     | contact_manager |   <select> name='' | id='' | type='select-one' | placeholder='' | value='20' | visible=False | enabled=True
+2026-06-12 18:59:43 | INFO     | contact_manager | [DEBUG] Total : 20 champ(s)
+2026-06-12 18:59:43 | INFO     | contact_manager | Mode detecte : formulaire complet
+2026-06-12 18:59:44 | INFO     | contact_manager | [DEBUG] URL    : https://www.seloger.com/annonces/achat/appartement/bordeaux-33/saint-bruno-saint-augustin/262972505.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 18:59:44 | INFO     | contact_manager | [DEBUG] Titre  : Appartement à vendre T3/F3 65.87 m² 28000 € Saint Augustin - Tauzin - Alphonse Dupeux Bordeaux (33000)
+2026-06-12 18:59:44 | INFO     | contact_manager | [DEBUG] input[name='firstName'] : 2 occurrence(s)
+2026-06-12 18:59:44 | INFO     | contact_manager | [DEBUG] input[name='lastName'] : 2 occurrence(s)
+2026-06-12 18:59:44 | INFO     | contact_manager | [DEBUG] input[name='email'] : 2 occurrence(s)
+2026-06-12 18:59:44 | INFO     | contact_manager | [DEBUG] input[name='phoneNumber'] : 2 occurrence(s)
+2026-06-12 18:59:44 | INFO     | contact_manager | [DEBUG] Inventaire complet des champs :
+2026-06-12 18:59:44 | INFO     | contact_manager |   <input> name='' | id='react-aria-_R_6aplehaecqkm_' | type='text' | placeholder='' | value='28 000' | visible=True | enabled=True
+2026-06-12 18:59:44 | INFO     | contact_manager |   <input> name='' | id='react-aria-_R_6qplehaecqkm_' | type='text' | placeholder='' | value='5 600' | visible=True | enabled=True
+2026-06-12 18:59:44 | INFO     | contact_manager |   <input> name='firstName' | id='react-aria-_R_18pmhaecqkm_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 18:59:44 | INFO     | contact_manager |   <input> name='lastName' | id='react-aria-_R_28pmhaecqkm_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 18:59:44 | INFO     | contact_manager |   <input> name='email' | id='react-aria-_R_cpmhaecqkm_' | type='email' | placeholder='exemple@domain.com' | value='' | visible=True | enabled=True
+2026-06-12 18:59:44 | INFO     | contact_manager |   <input> name='' | id='react-aria7481416455-_r_l_' | type='text' | placeholder='' | value='France +33' | visible=False | enabled=True
+2026-06-12 18:59:44 | INFO     | contact_manager |   <input> name='' | id='react-aria-_R_gpmhaecqkm_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 18:59:44 | INFO     | contact_manager |   <input> name='phoneNumber' | id='' | type='hidden' | placeholder='' | value='' | visible=False | enabled=True
+2026-06-12 18:59:44 | INFO     | contact_manager |   <input> name='isOwner' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 18:59:44 | INFO     | contact_manager |   <input> name='newsletterOptout' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 18:59:45 | INFO     | contact_manager |   <input> name='address' | id='react-aria7481416455-_r_2t_' | type='text' | placeholder='Ex : 2 rue des italiens, 75009 Paris' | value='' | visible=True | enabled=True
+2026-06-12 18:59:45 | INFO     | contact_manager |   <input> name='firstName' | id='react-aria7481416455-_r_12_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 18:59:45 | INFO     | contact_manager |   <input> name='lastName' | id='react-aria7481416455-_r_17_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 18:59:45 | INFO     | contact_manager |   <input> name='email' | id='react-aria7481416455-_r_1c_' | type='email' | placeholder='exemple@domain.com' | value='' | visible=True | enabled=True
+2026-06-12 18:59:45 | INFO     | contact_manager |   <input> name='' | id='react-aria7481416455-_r_1p_' | type='text' | placeholder='' | value='France +33' | visible=False | enabled=True
+2026-06-12 18:59:45 | INFO     | contact_manager |   <input> name='' | id='react-aria7481416455-_r_1h_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 18:59:45 | INFO     | contact_manager |   <input> name='phoneNumber' | id='' | type='hidden' | placeholder='' | value='' | visible=False | enabled=True
+2026-06-12 18:59:45 | INFO     | contact_manager |   <input> name='isOwner' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 18:59:45 | INFO     | contact_manager |   <input> name='newsletterOptout' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 18:59:50 | INFO     | contact_manager |   <select> name='' | id='' | type='select-one' | placeholder='' | value='20' | visible=False | enabled=True
+2026-06-12 18:59:50 | INFO     | contact_manager | [DEBUG] Total : 20 champ(s)
+2026-06-12 18:59:51 | INFO     | contact_manager |   [avant] displayed=True | enabled=True | value=''
+2026-06-12 18:59:53 | INFO     | contact_manager |   [apres M1+JS] value='Pierre-Alexandre'
+2026-06-12 18:59:53 | INFO     | contact_manager | Champ prenom trouve et rempli.
+2026-06-12 18:59:53 | INFO     | contact_manager |   [avant] displayed=True | enabled=True | value=''
+2026-06-12 18:59:54 | INFO     | contact_manager |   [apres M1+JS] value='Tepe'
+2026-06-12 18:59:54 | INFO     | contact_manager | Champ nom trouve et rempli.
+2026-06-12 18:59:54 | INFO     | contact_manager |   [avant] displayed=True | enabled=True | value=''
+2026-06-12 19:00:00 | INFO     | contact_manager |   [apres M1+JS] value='pierrealexandretepe6z@gmail.com'
+2026-06-12 19:00:00 | INFO     | contact_manager | Champ email trouve et rempli.
+2026-06-12 19:00:16 | INFO     | contact_manager | Champ telephone rempli (hidden JS).
+2026-06-12 19:00:16 | INFO     | contact_manager | Prix propose : 18 200 €
+2026-06-12 19:00:16 | INFO     | contact_manager | Message genere : Bonjour,
+
+Votre bien a retenu toute mon attention.
+
+Je me pe...
+2026-06-12 19:00:16 | INFO     | contact_manager | Recherche du lien 'Ajouter un message'...
+2026-06-12 19:00:32 | INFO     | contact_manager | Clic 'Ajouter un message' effectue (//*[contains(text(),'Ajouter un message')])
+2026-06-12 19:00:32 | INFO     | contact_manager | Textarea trouve (message)
+2026-06-12 19:00:35 | INFO     | contact_manager | Message rempli avec succes.
+2026-06-12 19:00:55 | INFO     | contact_manager | Tentative clic Selenium
+2026-06-12 19:00:58 | INFO     | contact_manager | Bouton Envoyer clique (Selenium).
+2026-06-12 19:00:58 | INFO     | contact_manager | Message envoye : SeLoger
+2026-06-12 19:00:58 | DEBUG    | excel_manager | Annonce enregistrée dans Excel : https://www.seloger.com/annonces/achat/appartement/bordeaux-33/saint-bruno-saint-augustin/262972505.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 19:00:59 | INFO     | main | Temps envoi messages : 139.8s
+2026-06-12 19:01:04 | INFO     | scraper | Navigateur fermé.
+2026-06-12 19:01:04 | INFO     | main | ============================================================
+2026-06-12 19:01:04 | INFO     | main | RAPPORT FINAL
+2026-06-12 19:01:04 | INFO     | main |   Annonces trouvees   : 15
+2026-06-12 19:01:04 | INFO     | main |   Annonces analysees  : 1
+2026-06-12 19:01:04 | INFO     | main |   Annonces contactees : 1
+2026-06-12 19:01:04 | INFO     | main |   Annonces echouees   : 0
+2026-06-12 19:01:04 | INFO     | main |   ---
+2026-06-12 19:01:04 | INFO     | main |   Temps recherche              : 0.0s
+2026-06-12 19:01:04 | INFO     | main |   Temps recuperation annonces  : 56.9s
+2026-06-12 19:01:04 | INFO     | main |   Temps extraction             : 2.1s
+2026-06-12 19:01:04 | INFO     | main |   Temps envoi messages         : 139.8s
+2026-06-12 19:01:04 | INFO     | main |   Temps total                  : 211.7s
+2026-06-12 19:01:04 | INFO     | main | ============================================================
+2026-06-12 19:11:53 | DEBUG    | city_resolver | Cache villes charge : 8 entree(s).
+2026-06-12 19:11:53 | INFO     | main | ============================================================
+2026-06-12 19:11:53 | INFO     | main | Démarrage du bot SeLoger
+2026-06-12 19:11:53 | INFO     | main | Critères : Bordeaux | achat | appartement | <=70000EUR | >=30m2 | >=2p | >=1ch
+2026-06-12 19:11:53 | INFO     | main | Messages a envoyer : 1
+2026-06-12 19:11:53 | INFO     | main | ============================================================
+2026-06-12 19:11:53 | DEBUG    | excel_manager | Fichier Excel existant chargé : C:\Users\tepep\Documents\GitHub\bot_seloger1\data\annonces_contactees.xlsx
+2026-06-12 19:11:53 | DEBUG    | excel_manager | 4 lien(s) déjà enregistré(s).
+2026-06-12 19:11:53 | INFO     | main | 4 annonce(s) deja contactee(s) en base.
+2026-06-12 19:11:53 | INFO     | scraper | Démarrage de Chrome (headless, sans images)...
+2026-06-12 19:12:00 | INFO     | scraper | Chrome démarré avec succès.
+2026-06-12 19:12:00 | INFO     | city_resolver | Code ville depuis cache memoire : 'Bordeaux' -> AD08FR13100
+2026-06-12 19:12:00 | INFO     | url_builder | URL generee : https://www.seloger.com/classified-search?distributionTypes=Buy&estateTypes=Apartment&locations=AD08FR13100&priceMax=70000&spaceMin=30&numberOfRoomsMin=2&numberOfBedroomsMin=1
+2026-06-12 19:12:00 | INFO     | main | Temps recherche : 0.0s
+2026-06-12 19:12:00 | INFO     | scraper | URL générée : https://www.seloger.com/classified-search?distributionTypes=Buy&estateTypes=Apartment&locations=AD08FR13100&priceMax=70000&spaceMin=30&numberOfRoomsMin=2&numberOfBedroomsMin=1
+2026-06-12 19:12:32 | INFO     | scraper | Collecte des liens — page 1...
+2026-06-12 19:12:32 | INFO     | scraper | Page 1 : 15 lien(s) trouvé(s).
+2026-06-12 19:12:32 | INFO     | scraper |   -> https://www.seloger.com/annonces/achat/appartement/bordeaux-33/270569867.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 19:12:32 | INFO     | scraper |   -> https://www.seloger.com/annonces/achat/appartement/bordeaux-33/hotel-de-ville-quinconce-saint-seurin-fondaudege/251959881.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 19:12:32 | INFO     | scraper |   -> https://www.seloger.com/annonces/achat/appartement/bordeaux-33/grand-parc-chartrons-paul-doumer/263963347.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 19:12:58 | INFO     | scraper | Total liens collectés : 15
+2026-06-12 19:12:58 | INFO     | main | Temps recuperation annonces : 57.3s
+2026-06-12 19:12:58 | INFO     | main | Annonces trouvees : 15
+2026-06-12 19:12:58 | INFO     | main | 11 nouveaux lien(s) a analyser (4 doublon(s) ignores).
+2026-06-12 19:12:58 | INFO     | main | Limite appliquee : 1 annonce(s).
+2026-06-12 19:12:58 | INFO     | fetcher | Extraction de 1 fiche(s) — 6 workers parallèles.
+2026-06-12 19:13:00 | INFO     | fetcher |   OK : '' |  |  | 
+2026-06-12 19:13:00 | INFO     | fetcher | Extraction terminée : 1/1 réussies.
+2026-06-12 19:13:00 | INFO     | main | Temps extraction : 1.9s
+2026-06-12 19:13:00 | INFO     | main | Annonces analysees : 1
+2026-06-12 19:13:00 | INFO     | main | [1/1] https://www.seloger.com/annonces/achat/appartement/le-bouscat-33/cheneraie-lavigne/267977777.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 19:13:00 | INFO     | contact_manager | Contact : https://www.seloger.com/annonces/achat/appartement/le-bouscat-33/cheneraie-lavigne/267977777.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 19:13:01 | INFO     | contact_manager | Bloqueur Usercentrics installe.
+2026-06-12 19:13:23 | INFO     | contact_manager | Bouton 'Appeler' absent — telephone agence non disponible.
+2026-06-12 19:13:24 | INFO     | scraper | [PRIX OK] Strategie: css-1ln7jbg | Texte: 'Bouquet 64\u202f131 €' | Valeur: 64131
+2026-06-12 19:13:24 | INFO     | contact_manager | Annonce enrichie : type=Appartement | tx=Achat | prix=64131 | offre=41 685 | surface=84 | pieces=3 | chambres=2 | etage=2ème étage | ville= (33110) | m²=763.46 | region=[2451-6093] | DPE=C GES=C
+2026-06-12 19:13:57 | WARNING  | contact_manager | Aucun bouton de contact trouve.
+2026-06-12 19:13:57 | INFO     | contact_manager | [DEBUG] URL   : https://www.seloger.com/annonces/achat/appartement/le-bouscat-33/cheneraie-lavigne/267977777.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 19:13:57 | INFO     | contact_manager | [DEBUG] Titre : Appartement à vendre T3/F3 84 m² 64131 € Cheneraie-Lavigne Le Bouscat (33110)
+2026-06-12 19:13:58 | INFO     | contact_manager | [DEBUG] Inventaire complet des champs :
+2026-06-12 19:13:58 | INFO     | contact_manager |   <input> name='' | id='react-aria5290783565-_r_m_' | type='text' | placeholder='' | value='64 131' | visible=True | enabled=True
+2026-06-12 19:13:58 | INFO     | contact_manager |   <input> name='' | id='react-aria5290783565-_r_r_' | type='text' | placeholder='' | value='12 826' | visible=True | enabled=True
+2026-06-12 19:13:58 | INFO     | contact_manager |   <input> name='firstName' | id='react-aria5290783565-_r_1d_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 19:13:59 | INFO     | contact_manager |   <input> name='lastName' | id='react-aria5290783565-_r_1i_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 19:13:59 | INFO     | contact_manager |   <input> name='email' | id='react-aria5290783565-_r_1n_' | type='email' | placeholder='exemple@domain.com' | value='' | visible=True | enabled=True
+2026-06-12 19:13:59 | INFO     | contact_manager |   <input> name='' | id='react-aria5290783565-_r_24_' | type='text' | placeholder='' | value='France +33' | visible=False | enabled=True
+2026-06-12 19:13:59 | INFO     | contact_manager |   <input> name='' | id='react-aria5290783565-_r_1s_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 19:13:59 | INFO     | contact_manager |   <input> name='phoneNumber' | id='' | type='hidden' | placeholder='' | value='' | visible=False | enabled=True
+2026-06-12 19:13:59 | INFO     | contact_manager |   <input> name='isOwner' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 19:13:59 | INFO     | contact_manager |   <input> name='newsletterOptout' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 19:13:59 | INFO     | contact_manager |   <input> name='address' | id='react-aria5290783565-_r_4s_' | type='text' | placeholder='Ex : 2 rue des italiens, 75009 Paris' | value='' | visible=True | enabled=True
+2026-06-12 19:13:59 | INFO     | contact_manager |   <input> name='firstName' | id='react-aria5290783565-_r_31_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 19:13:59 | INFO     | contact_manager |   <input> name='lastName' | id='react-aria5290783565-_r_36_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 19:13:59 | INFO     | contact_manager |   <input> name='email' | id='react-aria5290783565-_r_3b_' | type='email' | placeholder='exemple@domain.com' | value='' | visible=True | enabled=True
+2026-06-12 19:14:00 | INFO     | contact_manager |   <input> name='' | id='react-aria5290783565-_r_3o_' | type='text' | placeholder='' | value='France +33' | visible=False | enabled=True
+2026-06-12 19:14:00 | INFO     | contact_manager |   <input> name='' | id='react-aria5290783565-_r_3g_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 19:14:00 | INFO     | contact_manager |   <input> name='phoneNumber' | id='' | type='hidden' | placeholder='' | value='' | visible=False | enabled=True
+2026-06-12 19:14:00 | INFO     | contact_manager |   <input> name='isOwner' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 19:14:00 | INFO     | contact_manager |   <input> name='newsletterOptout' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 19:14:05 | INFO     | contact_manager |   <select> name='' | id='' | type='select-one' | placeholder='' | value='20' | visible=False | enabled=True
+2026-06-12 19:14:05 | INFO     | contact_manager | [DEBUG] Total : 20 champ(s)
+2026-06-12 19:14:05 | INFO     | contact_manager | Mode detecte : formulaire complet
+2026-06-12 19:14:05 | INFO     | contact_manager | [DEBUG] URL    : https://www.seloger.com/annonces/achat/appartement/le-bouscat-33/cheneraie-lavigne/267977777.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 19:14:05 | INFO     | contact_manager | [DEBUG] Titre  : Appartement à vendre T3/F3 84 m² 64131 € Cheneraie-Lavigne Le Bouscat (33110)
+2026-06-12 19:14:05 | INFO     | contact_manager | [DEBUG] input[name='firstName'] : 2 occurrence(s)
+2026-06-12 19:14:05 | INFO     | contact_manager | [DEBUG] input[name='lastName'] : 2 occurrence(s)
+2026-06-12 19:14:05 | INFO     | contact_manager | [DEBUG] input[name='email'] : 2 occurrence(s)
+2026-06-12 19:14:05 | INFO     | contact_manager | [DEBUG] input[name='phoneNumber'] : 2 occurrence(s)
+2026-06-12 19:14:05 | INFO     | contact_manager | [DEBUG] Inventaire complet des champs :
+2026-06-12 19:14:05 | INFO     | contact_manager |   <input> name='' | id='react-aria5290783565-_r_m_' | type='text' | placeholder='' | value='64 131' | visible=True | enabled=True
+2026-06-12 19:14:06 | INFO     | contact_manager |   <input> name='' | id='react-aria5290783565-_r_r_' | type='text' | placeholder='' | value='12 826' | visible=True | enabled=True
+2026-06-12 19:14:06 | INFO     | contact_manager |   <input> name='firstName' | id='react-aria5290783565-_r_1d_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 19:14:06 | INFO     | contact_manager |   <input> name='lastName' | id='react-aria5290783565-_r_1i_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 19:14:06 | INFO     | contact_manager |   <input> name='email' | id='react-aria5290783565-_r_1n_' | type='email' | placeholder='exemple@domain.com' | value='' | visible=True | enabled=True
+2026-06-12 19:14:06 | INFO     | contact_manager |   <input> name='' | id='react-aria5290783565-_r_24_' | type='text' | placeholder='' | value='France +33' | visible=False | enabled=True
+2026-06-12 19:14:06 | INFO     | contact_manager |   <input> name='' | id='react-aria5290783565-_r_1s_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 19:14:06 | INFO     | contact_manager |   <input> name='phoneNumber' | id='' | type='hidden' | placeholder='' | value='' | visible=False | enabled=True
+2026-06-12 19:14:06 | INFO     | contact_manager |   <input> name='isOwner' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 19:14:06 | INFO     | contact_manager |   <input> name='newsletterOptout' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 19:14:06 | INFO     | contact_manager |   <input> name='address' | id='react-aria5290783565-_r_4s_' | type='text' | placeholder='Ex : 2 rue des italiens, 75009 Paris' | value='' | visible=True | enabled=True
+2026-06-12 19:14:06 | INFO     | contact_manager |   <input> name='firstName' | id='react-aria5290783565-_r_31_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 19:14:06 | INFO     | contact_manager |   <input> name='lastName' | id='react-aria5290783565-_r_36_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 19:14:07 | INFO     | contact_manager |   <input> name='email' | id='react-aria5290783565-_r_3b_' | type='email' | placeholder='exemple@domain.com' | value='' | visible=True | enabled=True
+2026-06-12 19:14:07 | INFO     | contact_manager |   <input> name='' | id='react-aria5290783565-_r_3o_' | type='text' | placeholder='' | value='France +33' | visible=False | enabled=True
+2026-06-12 19:14:07 | INFO     | contact_manager |   <input> name='' | id='react-aria5290783565-_r_3g_' | type='text' | placeholder='' | value='' | visible=True | enabled=True
+2026-06-12 19:14:07 | INFO     | contact_manager |   <input> name='phoneNumber' | id='' | type='hidden' | placeholder='' | value='' | visible=False | enabled=True
+2026-06-12 19:14:07 | INFO     | contact_manager |   <input> name='isOwner' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 19:14:07 | INFO     | contact_manager |   <input> name='newsletterOptout' | id='' | type='checkbox' | placeholder='' | value='on' | visible=False | enabled=True
+2026-06-12 19:14:12 | INFO     | contact_manager |   <select> name='' | id='' | type='select-one' | placeholder='' | value='20' | visible=False | enabled=True
+2026-06-12 19:14:12 | INFO     | contact_manager | [DEBUG] Total : 20 champ(s)
+2026-06-12 19:14:12 | INFO     | contact_manager |   [avant] displayed=True | enabled=True | value=''
+2026-06-12 19:14:16 | INFO     | contact_manager |   [apres M1+JS] value='Pierre-Alexandre'
+2026-06-12 19:14:16 | INFO     | contact_manager | Champ prenom trouve et rempli.
+2026-06-12 19:14:17 | INFO     | contact_manager |   [avant] displayed=True | enabled=True | value=''
+2026-06-12 19:14:17 | INFO     | contact_manager |   [apres M1+JS] value='Tepe'
+2026-06-12 19:14:17 | INFO     | contact_manager | Champ nom trouve et rempli.
+2026-06-12 19:14:18 | INFO     | contact_manager |   [avant] displayed=True | enabled=True | value=''
+2026-06-12 19:14:24 | INFO     | contact_manager |   [apres M1+JS] value='pierrealexandretepe6z@gmail.com'
+2026-06-12 19:14:24 | INFO     | contact_manager | Champ email trouve et rempli.
+2026-06-12 19:14:25 | INFO     | contact_manager |   [avant] displayed=True | enabled=True | value=''
+2026-06-12 19:14:27 | INFO     | contact_manager |   [apres M1+JS] value='+33 7 67 69 36 03'
+2026-06-12 19:14:27 | INFO     | contact_manager | Champ telephone rempli (telephone (autocomplete=tel)).
+2026-06-12 19:14:27 | INFO     | contact_manager | Prix propose : 41 685 €
+2026-06-12 19:14:27 | INFO     | contact_manager | Message genere : Bonjour,
+
+Votre bien a retenu toute mon attention.
+
+Je me pe...
+2026-06-12 19:14:27 | INFO     | contact_manager | Recherche du lien 'Ajouter un message'...
+2026-06-12 19:14:43 | INFO     | contact_manager | Clic 'Ajouter un message' effectue (//*[contains(text(),'Ajouter un message')])
+2026-06-12 19:14:43 | INFO     | contact_manager | Textarea trouve (message)
+2026-06-12 19:14:45 | INFO     | contact_manager | Message rempli avec succes.
+2026-06-12 19:15:05 | INFO     | contact_manager | Tentative clic Selenium
+2026-06-12 19:15:07 | INFO     | contact_manager | Bouton Envoyer clique (Selenium).
+2026-06-12 19:15:07 | INFO     | contact_manager | Message envoye : SeLoger
+2026-06-12 19:15:08 | DEBUG    | excel_manager | Annonce enregistrée dans Excel : https://www.seloger.com/annonces/achat/appartement/le-bouscat-33/cheneraie-lavigne/267977777.htm?serp_view=list&search=distributionTypes%3DBuy%26estateTypes%3DApartment%26locations%3DAD08FR13100%26numberOfBedroomsMin%3D1%26numberOfRoomsMin%3D2%26priceMax%3D70000%26spaceMin%3D30#ln=classified_search_results&m=classified_search_results_classified_classified_detail_L
+2026-06-12 19:15:08 | INFO     | main | Temps envoi messages : 128.7s
+2026-06-12 19:15:14 | INFO     | scraper | Navigateur fermé.
+2026-06-12 19:15:14 | INFO     | main | ============================================================
+2026-06-12 19:15:14 | INFO     | main | RAPPORT FINAL
+2026-06-12 19:15:14 | INFO     | main |   Annonces trouvees   : 15
+2026-06-12 19:15:14 | INFO     | main |   Annonces analysees  : 1
+2026-06-12 19:15:14 | INFO     | main |   Annonces contactees : 1
+2026-06-12 19:15:14 | INFO     | main |   Annonces echouees   : 0
+2026-06-12 19:15:14 | INFO     | main |   ---
+2026-06-12 19:15:14 | INFO     | main |   Temps recherche              : 0.0s
+2026-06-12 19:15:14 | INFO     | main |   Temps recuperation annonces  : 57.3s
+2026-06-12 19:15:14 | INFO     | main |   Temps extraction             : 1.9s
+2026-06-12 19:15:14 | INFO     | main |   Temps envoi messages         : 128.7s
+2026-06-12 19:15:14 | INFO     | main |   Temps total                  : 200.2s
+2026-06-12 19:15:14 | INFO     | main | ============================================================
