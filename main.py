@@ -301,17 +301,17 @@ def _afficher_rapport(
 
 if __name__ == "__main__":
     rechercher_annonces(
-        ville="Bordeaux",   #obligatoire   # "" si tu veux pas mettre pour les autres para*
+        ville="Bordeaux",
         transaction="achat",
-        type_logement="appartement",   #apartoumaison pour les deux pas appartementoumaison !!!!
-        budget_max=70000,   
+        type_logement="appartement",  # "maison", "appartement,maison" ou "apartoumaison"
+        budget_max=200000,
         surface_min=30,
         pieces_min=2,
         chambres_min=1,
-        prenom="Pierre-Alexandre",
-        nom="Tepe",
-        email="pierrealexandretepe6z@gmail.com",
-        telephone="0767693603",
-        envoyer_message=True,   # mettre True pour envoyer réellement
+        prenom="Prenom",
+        nom="Nom",
+        email="exemple@email.com",
+        telephone="0600000000",
+        envoyer_message=False,  # True pour envoyer réellement
         nombre_messages=1,
     )

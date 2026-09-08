@@ -1,3 +1,31 @@
- 
-.claude/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.env
+.env.*
 
+# Données générées / perso
+data/
+logs/
+debug/
+screenshots/
+
+# IDE / outils locaux
+.claude/
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Divers
+archi.txt
+*.xlsx
+*.log
